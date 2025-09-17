@@ -2543,7 +2543,7 @@ Layout do sistema
 }
 
 option.todos_produtos {
-  color: #000;
+
   font-size: 14px;
   text-decoration: none;
 
@@ -2555,10 +2555,11 @@ option.todos_produtos {
 }
 
 option.todos_produtos:hover {
-  color: #0D74BD;
-  font-weight: bold;
+  opacity: 0.85;
+
   cursor: pointer;
-  background-color: #cfe8ff;
+  font-weight: bold;
+  filter: brightness(1.1);
 }
 
 .selectProd:focus {

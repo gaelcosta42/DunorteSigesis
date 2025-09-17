@@ -717,31 +717,6 @@ if (!$usuario->is_Todos())
 					window.location.href = 'index.php?do=estoque&acao=listar&id_categoria=' + id_categoria + '&id_grupo=' + id_grupo + '&id_fabricante=' + id_fabricante;
 				});
 			});
-			// ]]>
-		</script>
-		<script type="text/javascript">
-			// <![CDATA[
-			$(document).ready(function () {
-				$('#id_grupo').change(function () {
-					var id_categoria = $("#id_categoria").val();
-					var id_grupo = $("#id_grupo").val();
-					var id_fabricante = $("#id_fabricante").val();
-					window.location.href = 'index.php?do=estoque&acao=listar&id_categoria=' + id_categoria + '&id_grupo=' + id_grupo + '&id_fabricante=' + id_fabricante;
-				});
-			});
-			// ]]>
-		</script>
-		<script type="text/javascript">
-			// <![CDATA[
-			$(document).ready(function () {
-				$('#id_fabricante').change(function () {
-					var id_categoria = $("#id_categoria").val();
-					var id_grupo = $("#id_grupo").val();
-					var id_fabricante = $("#id_fabricante").val();
-					window.location.href = 'index.php?do=estoque&acao=listar&id_categoria=' + id_categoria + '&id_grupo=' + id_grupo + '&id_fabricante=' + id_fabricante;
-				});
-			});
-			// ]]>
 		</script>
 		<!-- INICIO CONTEUDO DA PAGINA -->
 		<div class="page-container">
@@ -862,6 +837,7 @@ if (!$usuario->is_Todos())
 												<th><?php echo lang('CODIGO_DE_BARRAS'); ?></th>
 												<th><?php echo lang('PRODUTO'); ?></th>
 												<th><?php echo lang('GRUPO'); ?></th>
+												<th><?php echo lang('COR'); ?></th>
 												<th><?php echo lang('ESTOQUE_ATUAL'); ?></th>
 												<th><?php echo lang('ESTOQUE_MINIMO'); ?></th>
 												<th><?php echo lang('ACOES'); ?></th>
@@ -880,6 +856,7 @@ if (!$usuario->is_Todos())
 														<td><?php echo $exrow->codigobarras; ?></td>
 														<td><?php echo $exrow->nome; ?></td>
 														<td><?php echo $exrow->grupo; ?></td>
+														<td><?php echo $exrow->cor_grupo; ?></td>
 														<td><?php echo decimalp($exrow->estoque); ?></td>
 														<td><?php echo decimalp($exrow->estoque_minimo); ?></td>
 														<td>
@@ -898,6 +875,76 @@ if (!$usuario->is_Todos())
 											endif; ?>
 										</tbody>
 									</table>
+									<script>
+										$(function () {
+											// seleciona a primeira tabela .dataTable da página (melhor do que pegar todas)
+											var $t = $('.dataTable').first();
+
+											// Inicializa (ou pega) a instância DataTable
+											var dt = $.fn.DataTable.isDataTable($t) 
+											? $t.DataTable() 
+											: $t.DataTable({
+												language: { url: 'plugins/datatables/Portuguese-Brasil.json' },
+												pageLength: 25,
+												order: [[0, 'desc']],              
+												columnDefs: [
+												{ targets: 5, visible: false }   
+												],
+												rowCallback: function (row, data) {
+												styleRow(row, data);
+												}
+											});
+
+											// função que aplica os estilos na linha. Recebe o nó da linha e o `data` que o DataTables fornece.
+											function styleRow(row, data) {
+												var $row = $(row);
+
+												var cor = data[5] || '';
+
+												if (/^#([0-9A-F]{3}){1,2}$/i.test(cor)) {
+													$row.css({
+														'background-color': cor,
+														'color': '#fff'
+													});
+
+
+												} else {
+													$row.css({ 'background-color': '#f2f2f2', 'color': '#000' });
+												}
+
+												$row.find('td, a, span, div').css({
+													'color': '#fff',
+													'text-shadow': '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+													'letter-spacing': '0.5px',
+													'font-size': '10.5px'
+												});
+
+												$row.css({
+													'font-weight': '600',
+													'padding': '8px 12px'
+												});
+
+												$row.find('a').css('color', '#fff');
+											}
+
+											// Se a tabela já existia (instância criada por outro script), garante que todas as linhas atuais e futuras sejam estilizadas
+											if ($.fn.DataTable.isDataTable($t)) {
+												dt.rows().every(function () {
+												styleRow(this.node(), this.data());
+												});
+
+												dt.on('draw', function () {
+												dt.rows().every(function () {
+													styleRow(this.node(), this.data());
+												});
+												});
+											} else {
+												dt.rows().every(function () {
+												styleRow(this.node(), this.data());
+												});
+											}
+										});
+									</script>
 								</div>
 							</div>
 							<!-- FINAL TABELA -->

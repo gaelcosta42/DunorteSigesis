@@ -38,10 +38,12 @@
         $whereNome = substr($whereNome,0,-5);
         $whereNome .= ')';
 
-        $sql = " SELECT p.id, p.nome, p.codigo_interno, p.codigo, p.codigobarras, p.valor_avista, pt.id_tabela as id_tabela, pt.valor_venda, p.estoque, p.unidade, p.descricao_unidade
+        $sql = " SELECT p.id, p.nome, p.codigo_interno, p.codigo, p.codigobarras, p.valor_avista, pt.id_tabela as id_tabela, 
+        pt.valor_venda, p.estoque, p.unidade, p.descricao_unidade, gr.idcor as cor_hex
         FROM produto as p
         LEFT JOIN produto_tabela as pt on pt.id_produto = p.id
         LEFT JOIN tabela_precos as tp on tp.id = pt.id_tabela
+        LEFT JOIN grupo as gr on p.id_grupo = gr.id
         WHERE p.inativo = 0 
         AND p.grade = 1 AND tp.id = {$id_tabela}
         AND ($whereNome or p.codigobarras like '%$nome_produto%' or p.codigo LIKE '%$nome_produto%' or p.codigo_interno like '$nome_produto') 

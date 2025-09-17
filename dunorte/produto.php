@@ -910,6 +910,26 @@ if (!defined("_VALID_PHP"))
 															<div class="row">
 																<div class="form-group">
 																	<label
+																		class="control-label col-md-3"><?php echo lang('COMPRIMENTO'); ?></label>
+																	<div class="col-md-9">
+																		<input type="text" class="form-control decimalp" name="comprimento"
+																			value="<?php echo $row->comprimento; ?>">
+																	</div>
+																</div>
+															</div>
+															<div class="row">
+																<div class="form-group">
+																	<label
+																		class="control-label col-md-3"><?php echo lang('LARGURA'); ?></label>
+																	<div class="col-md-9">
+																		<input type="text" class="form-control decimalp" name="largura"
+																			value="<?php echo $row->largura; ?>">
+																	</div>
+																</div>
+															</div>
+															<div class="row">
+																<div class="form-group">
+																	<label
 																		class="control-label col-md-3"><?php echo lang('LINK'); ?></label>
 																	<div class="col-md-9">
 																		<input type="text" class="form-control" name="link"
@@ -2001,6 +2021,26 @@ if (!defined("_VALID_PHP"))
 														<div class="row">
 															<div class="form-group">
 																<label
+																	class="control-label col-md-3"><?php echo lang('LARGURA'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control decimalp"
+																		name="largura">
+																</div>
+															</div>
+														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
+																	class="control-label col-md-3"><?php echo lang('COMPRIMENTO'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control decimalp"
+																		name="comprimento">
+																</div>
+															</div>
+														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
 																	class="control-label col-md-3"><?php echo lang('LINK'); ?></label>
 																<div class="col-md-9">
 																	<input type="text" class="form-control" name="link">
@@ -2652,7 +2692,8 @@ if (!defined("_VALID_PHP"))
 		</div>
 		<!-- FINAL CONTEUDO DA PAGINA -->
 		<?php break; ?>
-	<?php case "listar": ?>
+	<?php 
+	case "listar": ?>
 		<!-- INICIO CONTEUDO DA PAGINA -->
 		<div class="page-container">
 			<!-- INICIO CABECALHO DA PAGINA -->
@@ -2712,16 +2753,17 @@ if (!defined("_VALID_PHP"))
 											<select class="select2me form-control input-large" name="id_grupo" id="id_grupo">
 												<option value="">TODOS GRUPOS</option>
 												<?php
-												$retorno_row = $produto->getGrupos();
-												if ($retorno_row):
-													foreach ($retorno_row as $srow):
-														?>
-														<option value="<?php echo $srow->id; ?>"><?php echo $srow->grupo; ?></option>
-														<?php
+													$retorno_row = $produto->getGrupos();
+													if ($retorno_row):
+														foreach ($retorno_row as $srow):?>
+															<option 
+																value="<?php echo $srow->id; ?>">
+																<?php echo $srow->grupo; ?>
+															</option>
+												<?php
 													endforeach;
 													unset($srow);
-												endif;
-												?>
+												endif; ?>
 											</select>
 										</div>
 										<div class="form-group">
@@ -2729,17 +2771,16 @@ if (!defined("_VALID_PHP"))
 												id="id_categoria">
 												<option value="">TODAS CATEGORIAS</option>
 												<?php
-												$retorno_row = $produto->getCategorias();
-												if ($retorno_row):
-													foreach ($retorno_row as $srow):
-														?>
-														<option value="<?php echo $srow->id; ?>"><?php echo $srow->categoria; ?>
-														</option>
-														<?php
-													endforeach;
-													unset($srow);
-												endif;
-												?>
+													$retorno_row = $produto->getCategorias();
+													if ($retorno_row):
+														foreach ($retorno_row as $srow):
+															?>
+															<option value="<?php echo $srow->id; ?>"><?php echo $srow->categoria; ?>
+															</option>
+															<?php
+														endforeach;
+														unset($srow);
+												endif; ?>
 											</select>
 										</div>
 										<div class="form-group">
@@ -2747,17 +2788,16 @@ if (!defined("_VALID_PHP"))
 												id="id_fabricante">
 												<option value="">TODOS FABRICANTES</option>
 												<?php
-												$retorno_row = $produto->getFabricantes();
-												if ($retorno_row):
-													foreach ($retorno_row as $srow):
-														?>
-														<option value="<?php echo $srow->id; ?>"><?php echo $srow->fabricante; ?>
-														</option>
-														<?php
-													endforeach;
-													unset($srow);
-												endif;
-												?>
+													$retorno_row = $produto->getFabricantes();
+													if ($retorno_row):
+														foreach ($retorno_row as $srow):
+															?>
+															<option value="<?php echo $srow->id; ?>"><?php echo $srow->fabricante; ?>
+															</option>
+															<?php
+														endforeach;
+														unset($srow);
+												endif; ?>
 											</select>
 										</div>
 									</form>
@@ -2770,8 +2810,7 @@ if (!defined("_VALID_PHP"))
 								</style>
 								<div class="portlet-body">
 									<form class="form-inline" action="" method="post" name="admin_form" id="admin_form">
-										<table class="table table-bordered table-condensed table-advance"
-											id="table_listar_produtos">
+										<table class="table table-bordered table-condensed table-advance" id="table_listar_produtos">
 											<thead>
 												<tr>
 													<th class="table-checkbox">
@@ -2794,7 +2833,6 @@ if (!defined("_VALID_PHP"))
 													<th width="130px"><?php echo lang('ACOES'); ?></th>
 												</tr>
 											</thead>
-											<tbody>
 											</tbody>
 										</table>
 									</form>
@@ -3455,26 +3493,20 @@ if (!defined("_VALID_PHP"))
 	<?php
 	case "buscar": ?>
 		<script type="text/javascript">
-			// <![CDATA[
 			$(document).ready(function () {
 				$('#produto').focus();
 			});
-			// ]]>
 		</script>
 		<!-- INICIO CONTEUDO DA PAGINA -->
 		<div class="page-container">
-			<!-- INICIO CABECALHO DA PAGINA -->
 			<div class="page-head">
 				<div class="container">
-					<!-- INICIO TITULO DA PAGINA -->
 					<div class="page-title">
 						<h1><?php echo lang('PRODUTO_TITULO'); ?>&nbsp;<i
 								class="fa fa-angle-right"></i>&nbsp;<small><?php echo lang('PRODUTO_BUSCAR'); ?></small></h1>
 					</div>
-					<!-- FINAL TITULO DA PAGINA -->
 				</div>
 			</div>
-			<!-- FINAL CABECALHO DA PAGINA -->
 			<!-- INICIO DOS MODULOS DA PAGINA -->
 			<div class="page-content">
 				<div class="container">
@@ -3510,17 +3542,18 @@ if (!defined("_VALID_PHP"))
 													</tr>
 												</thead>
 												<tbody>
-													<?php
-													foreach ($retorno_row as $exrow):
+													<?php foreach ($retorno_row as $exrow): 
 														$status = '';
 														if (!$exrow->inativo):
 															$status = "<span class='label label-sm bg-green'>" . lang('ATIVO') . "</span>";
 															?>
-															<tr <?php echo ($exrow->inativo) ? "class='font-red'" : ""; ?>>
+															<tr data-color="<?= $exrow->idcolor ?>" class="">
 																<td><?php echo $exrow->codigo; ?></td>
 																<td><?php echo $exrow->codigobarras; ?></td>
-																<td><a
-																		href="index.php?do=produto&acao=editar&id=<?php echo $exrow->id; ?>"><?php echo $exrow->nome; ?></a>
+																<td>
+																	<a href="index.php?do=produto&acao=editar&id=<?php echo $exrow->id; ?>">
+																		<?php echo $exrow->nome; ?>
+																	</a>
 																</td>
 																<td><?php echo $exrow->grupo; ?></td>
 																<td><?php echo $exrow->categoria; ?></td>
@@ -3531,29 +3564,35 @@ if (!defined("_VALID_PHP"))
 																	<?php if ($exrow->grade): ?>
 																		<a href="javascript:void(0);" class="btn btn-sm green-jungle gradevendas"
 																			grade="0" id="<?php echo $exrow->id; ?>"
-																			title="<?php echo lang('GRADE_VENDAS') . ": " . $exrow->nome; ?>"><i
-																				class="fa fa-th"></i></a>
+																			title="<?php echo lang('GRADE_VENDAS') . ": " . $exrow->nome; ?>">
+																			<i class="fa fa-th"></i>
+																		</a>
 																	<?php else: ?>
 																		<a href="javascript:void(0);" class="btn btn-sm grey-gallery gradevendas"
 																			grade="1" id="<?php echo $exrow->id; ?>"
-																			title="<?php echo lang('GRADE_VENDAS') . ": " . $exrow->nome; ?>"><i
-																				class="fa fa-th"></i></a>
+																			title="<?php echo lang('GRADE_VENDAS') . ": " . $exrow->nome; ?>">
+																			<i class="fa fa-th"></i>
+																		</a>
 																	<?php endif; ?>
 																	<a href="javascript:void(0);" class="btn btn-sm yellow"
 																		onclick="javascript:void window.open('imprimir_estoque.php?id_produto=<?php echo $exrow->id; ?>','<?php echo $exrow->nome; ?>','width=800,height=600,toolbar=0,menubar=0,location=0,status=0,scrollbars=1,resizable=1,left=0,top=0');return false;"
-																		title="<?php echo lang('ESTOQUE_HISTORICO'); ?>"><i
-																			class="fa fa-header"></i></a>
+																		title="<?php echo lang('ESTOQUE_HISTORICO'); ?>">
+																		<i class="fa fa-header"></i>
+																	</a>
 																	<a href="index.php?do=produto&acao=editar&id=<?php echo $exrow->id; ?>"
 																		class="btn btn-sm blue"
-																		title="<?php echo lang('EDITAR') . ': ' . $exrow->nome; ?>"><i
-																			class="fa fa-pencil"></i></a>
+																		title="<?php echo lang('EDITAR') . ': ' . $exrow->nome; ?>">
+																		<i class="fa fa-pencil"></i>
+																	</a>
 																	<a href="javascript:void(0);" class="btn btn-sm red apagar"
 																		id="<?php echo $exrow->id; ?>" acao="apagarProduto"
-																		title="<?php echo lang('APAGAR') . $exrow->nome; ?>"><i
-																			class="fa fa-times"></i></a>
+																		title="<?php echo lang('APAGAR') . $exrow->nome; ?>">
+																		<i class="fa fa-times"></i>
+																	</a>
 																</td>
 															</tr>
-														<?php else:
+														<?php else: ?>
+															<?php 
 															$status = "<span class='label label-sm bg-red'>" . lang('CANCELADO') . "</span>";
 															$array_linha = array(
 																'id' => $exrow->id,
@@ -3567,10 +3606,30 @@ if (!defined("_VALID_PHP"))
 																'status' => $status
 															);
 															$array_cancelados[] = $array_linha;
-														endif;
-													endforeach;
-													unset($exrow); ?>
+															?>
+														<?php endif; ?>
+													<?php endforeach; ?>
 												</tbody>
+												<script>
+												$(document).ready(function(){
+													$('table tbody tr').each(function(){
+														var $tr = $(this);
+														var cor = $tr.data('color');
+
+														if (cor && /^#([0-9A-F]{3}){1,2}$/i.test(cor)) {
+															$tr.css({
+																'background-color': cor,
+																'color': '#fff',
+																'font-weight': '600'
+															});
+															$tr.find('td, a, span, div').css({
+																'color': '#fff',
+																'text-shadow': '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000'
+															});
+														}
+													});
+												});
+												</script>
 											</table>
 										</div>
 									<?php else: ?>

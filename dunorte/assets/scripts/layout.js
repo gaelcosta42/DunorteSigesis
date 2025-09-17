@@ -8280,12 +8280,13 @@ var Layout = function () {
 				{
 					'searchable': true,
 					'orderable': false,
-					'render': function (data, type, full, meta) {
+					'render': function (data, type, full, meta) 
+					{
 						return `
-								<a href="javascript:void(0);" class="btn btn-sm ${full.grade == 1 ? 'green-jungle' : 'grey-gallery'} gradevendas" grade="${full.grade == 1 ? 0 : 1}" id="${full.id}" title="Grade de vendas : ${full.nome}"><i class="fa fa-th"></i></a>
-								<a href="index.php?do=produto&acao=editar&id=${full.id}&id_grupo=${full.id_grupo}&id_categoria="${full.id_categoria}" class="btn btn-sm blue" title="Editar: ${full.nome}"><i class="fa fa-pencil"></i></a>
-								<a href="javascript:void(0);" class="btn btn-sm red apagar" id="${full.id}" acao="apagarProduto" title="Você deseja apagar este produto? ${full.nome}"><i class="fa fa-times"></i></a>
-							`;
+						<a href="javascript:void(0);" class="btn btn-sm ${full.grade == 1 ? 'green-jungle' : 'grey-gallery'} gradevendas" grade="${full.grade == 1 ? 0 : 1}" id="${full.id}" title="Grade de vendas : ${full.nome}"><i class="fa fa-th"></i></a>
+						<a href="index.php?do=produto&acao=editar&id=${full.id}&id_grupo=${full.id_grupo}&id_categoria="${full.id_categoria}" class="btn btn-sm blue" title="Editar: ${full.nome}"><i class="fa fa-pencil"></i></a>
+						<a href="javascript:void(0);" class="btn btn-sm red apagar" id="${full.id}" acao="apagarProduto" title="Você deseja apagar este produto? ${full.nome}"><i class="fa fa-times"></i></a>
+						`;
 					}
 				}
 			],
@@ -8419,6 +8420,50 @@ var Layout = function () {
 						$(this).removeClass('danger');
 					}
 				});
+			},
+			'rowCallback': function(row, data) {
+				
+				//#region colorindo background das rows
+				if (data.cor_grupo && /^#([0-9A-F]{3}){1,2}$/i.test(data.cor_grupo)) {
+					$(row).css("background-color", data.cor_grupo);
+				} else {
+					$(row).css("background-color", "#f2f2f2");
+				}
+				//#endregion
+
+				$(row).css({
+					"color": "#fff",       
+					"font-weight": "600",     
+					"padding": "8px 12px"     
+				});
+
+				$(row).find('td, a, span, div').css({
+					"text-shadow": `
+						-1px -1px 0 #000,
+						1px -1px 0 #000,
+						-1px  1px 0 #000,
+						1px  1px 0 #000
+					`,
+					"letter-spacing": "0.5px", 
+					"font-size": "10.5px"       
+				});
+				
+				//nome do produto tá linkado por isso um find separado para ele 
+				$(row).find('td a').css({
+					"color": "#fff"
+				});
+				
+				//#region modificando botao ação
+				$(row).find('td:last-child i').css({
+					"font-size": "12px",  
+					"line-height": "12px" 
+				});
+
+				$(row).find('td:last-child a').css({
+					"padding": "2px 5px",  
+					"font-size": "12px"    
+				});
+				//#endregion
 			}
 		});
 		$('#id_grupo').change(() => table.draw());
@@ -9530,6 +9575,13 @@ var Layout = function () {
 			aux++;
 		});
 
+		aux = 0;
+		var cor_produto = []; // array de cores (hex)
+		$(".cor_produto_pdv").each(function () {
+			cor_produto.push($(".cor_produto_pdv")[aux].value);
+			aux++;
+		});
+
 		$("#tabela_produtos").empty();
 
 		for (var indice_produto = 0; indice_produto < id_produto.length; indice_produto++) {
@@ -9559,6 +9611,8 @@ var Layout = function () {
 			var valorProd = valor_pagar_produto;
 			var estoqueProd = estoque_produto[indice_produto];
 			var quantidade = parseFloat(quantidade_atualizar);
+			var cor_hex = cor_produto[indice_produto];
+
 
 			var total = valorProd * quantidade;
 
@@ -9572,7 +9626,7 @@ var Layout = function () {
 
 			var table = $('#tabela_produtos');
 			table.prepend(
-				`<tr style="border-collapse: collapse;">
+				`<tr style="border-collapse: collapse; background-color:${cor_hex};">
 					<td><span class="font-md">${nomeProd}</span></td>
 					<td><span class="font-md"></span></td>
 					<td><span class="font-md">${estoqueProd}</span></td>
@@ -9599,6 +9653,7 @@ var Layout = function () {
 					<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
 					<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `" />
 					<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela_atualizar + `" />
+					<input type="hidden" class="cor_produto_pdv" value="${cor_hex}" />
 					<input type="hidden" class="total" value="`+ total + `" />
 					<input type="hidden" class="estoque" value="`+ estoqueProd + `" />
 				</tr>`
@@ -10088,7 +10143,9 @@ var Layout = function () {
 		}
 	});
 
-	//Atalho F1
+	//======================
+	//#region MÓDULO: PDV F1
+	//======================
 	function modalProdutosComF1(valor = 0) {
 
 		$('#modal_produtos').modal();
@@ -10124,8 +10181,13 @@ var Layout = function () {
 			$('#nome_produto').focus();
 		}
 
+		// --- Ajax + eventos ---
 		$('#nome_produto').on('keyup', function (e) {
-			let value = $.trim($(this).val()).replace("#", "!hashtag!").replace("@", "!arroba!").replace("$", "!dollar!");
+			let value = $.trim($(this).val())
+				.replace("#", "!hashtag!")
+				.replace("@", "!arroba!")
+				.replace("$", "!dollar!");
+
 			let id_tabela = $('#id_tabela_venda').val();
 
 			$.ajax({
@@ -10138,21 +10200,30 @@ var Layout = function () {
 					html1 += `<select multiple class="select2 form-control selectProd" autofocus ${cssSelect}>`;
 
 					for (let i = 0; i < data.length; i++) {
-
 						var id_produto = data[i].id;
-
-						var nome = (data[i].nome);
+						var nome = data[i].nome;
 						var valor = parseFloat(data[i].valor_venda);
-						var valor_exibir = 'R$ '
+						var valor_exibir = 'R$ ';
 						var estoque = data[i].estoque;
 						var valor_avista = data[i].valor_avista;
-						var cb = data[i].codigobarras;
 						var codigo = data[i].codigo;
 						var codigo_interno = data[i].codigo_interno;
 						var unidade = data[i].unidade;
-						let info_produto = unidade ? `${codigo} - ${nome} (${unidade} - ${valor_exibir}${valor}) ${codigo_interno}` : `${codigo} - ${nome} (${valor_exibir}${valor}) ${codigo_interno}`;
+						var cor_hex = data[i].cor_hex; // ← vem do banco (grupo)
 
-						html1 += `<option class="todos_produtos" value="${id_produto}" estoqueProd="${estoque}" valor_avista="${valor_avista}" valorProd="${valor}" unidade="${unidade}">`;
+						let info_produto = unidade
+							? `${codigo} - ${nome} (${unidade} - ${valor_exibir}${valor}) ${codigo_interno}`
+							: `${codigo} - ${nome} (${valor_exibir}${valor}) ${codigo_interno}`;
+
+						html1 += `<option class="todos_produtos" 
+									value="${id_produto}" 
+									estoqueProd="${estoque}" 
+									valor_avista="${valor_avista}" 
+									valorProd="${valor}" 
+									unidade="${unidade}" 
+									data-cor="${cor_hex}" 
+									style="background-color:${cor_hex}; color:#000;">`;
+
 						html1 += ` ${info_produto} `;
 						html1 += `</option>`;
 					}
@@ -10162,21 +10233,23 @@ var Layout = function () {
 						$('#showProduct').prepend(html1);
 					}
 
-					if ($('.selectProd').is(' :empty')) {
+					if ($('.selectProd').is(':empty')) {
 						$('.infoprod').show();
 						$('#showProduct').empty();
-						// $('#nome_produto').val("").focus(); // Linha de codigo que apaga o valor do campo toda vez que não tem um produto com aquele nome.
-					} else $('.infoprod').hide();
-
+					} else {
+						$('.infoprod').hide();
+					}
 					$('.selectProd').keyup(function (event) {
 
 						var idProduto = parseFloat($('.selectProd option:selected').val());
 						var nomeProd = $('.selectProd option:selected').text();
+						var corHex = $('.selectProd option:selected').attr('data-cor');
+						console.log("Cor do produto:", corHex);
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
 						var valor_avista = parseFloat($('.selectProd option:selected').attr('valor_avista'));
 						var unid = ($('.selectProd option:selected').attr('unidade')) ? $('.selectProd option:selected').attr('unidade') : '';
-
+						
 						pagamentoAVista = false;
 						controle_avista = 1;
 						controle_pagamentos = 0;
@@ -10223,7 +10296,7 @@ var Layout = function () {
 
 							var table = $('#tabela_produtos');
 							table.prepend(
-								`<tr style="border-collapse: collapse;">
+								`<tr style="border-collapse: collapse; background-color:${corHex};">
 									<td><span class="font-md">${nomeProd}</span></td>
 									<td><span class="font-md">${unid}</span></td>
 									<td><span class="font-md">${estoqueProd}</span></td>
@@ -10249,20 +10322,12 @@ var Layout = function () {
 									<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="`+ nomeProd + `" />
 									<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
 									<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `" />
+									<input name="cor_produto_pdv[]" type="hidden" class="cor_produto_pdv" value="` + cor_hex + `" />
 									<input type="hidden" class="total" value="`+ total + `" />
 									<input type="hidden" class="estoque" value="`+ estoqueProd + `" />
 									<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela + `" />
 								</tr>`
 							).find("tr").first().hide();
-
-							const styles = {
-								"pointer-events": "none",
-								"background-color": "#eaeaea"
-							}
-
-							if (modalActive === 1) {
-								$('#vlr_venda_produto').css(styles);
-							}
 
 							if (modalActive === 0) $('.btn_alterar_valor_produto_venda').addClass('hidden');
 							table.find("tr").first().fadeIn();
@@ -10387,6 +10452,7 @@ var Layout = function () {
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
 						var valor_avista = parseFloat($('.selectProd option:selected').attr('valor_avista'));
 						var unid = ($('.selectProd option:selected').attr('unidade')) ? $('.selectProd option:selected').attr('unidade') : '';
+						var corHex = $('.selectProd option:selected').attr('data-cor');
 
 						pagamentoAVista = false;
 						controle_avista = 1;
@@ -10426,10 +10492,9 @@ var Layout = function () {
 						let modalActive = $('#modal_alterar_valor_produto_venda').val() == 1 ? 1 : 0;
 
 						var table = $('#tabela_produtos');
-
 						if (idProduto > 0) {
 							table.prepend(
-								`<tr style="border-collapse: collapse;">
+								`<tr style="border-collapse: collapse; background-color:${corHex};">
 									<td><span class="font-md">${nomeProd}</span></td>
 									<td><span class="font-md">${unid}</span></td>
 									<td><span class="font-md">${estoqueProd}</span></td>
@@ -10592,514 +10657,15 @@ var Layout = function () {
 		});
 	}
 
-	//Atalho F1 - Mostra todos os produtos no modal - Vendas > Nova Venda
 	shortcut.add("F1", function () {
 		modalProdutosComF1(-1);
 	});
 
-	//Modal adicionar produto em VENDAS > NOVA VENDA
-	$('.modal_adicionar_produto').click(function (event) {
-
-		shortcut.add("ENTER", function () { $('.selectProd').focus(); });
-
-		if (!$('#showProduct').empty()) $('#showProduct').removeData();
-		$('#showProductInput').empty();
-		$('#showQuantidadeInput').empty();
-
-		let html_qtde = '';
-		html_qtde += `<input class="form-control decimal" type="text" name="qtde_produto" id="qtde_produto" placeholder="Quant.">`;
-		html_qtde += `<span class="help-block pull-left">Quantidade</span>`;
-		$('#showQuantidadeInput').append(html_qtde);
-
-		let html = '';
-		let cssInput = 'style="margin-bottom: 25px"';
-		let cssSpan = 'style="color: red; font-weight: bold;"';
-
-		html += `<div ${cssInput}>`;
-		html += `<input autocomplete="off" type="text" class="form-control produtos" name="nome_produto" id="nome_produto" placeholder="Digite o nome do produto, código ou código de barras" autofocus>`;
-		html += `<span class="help-block pull-left">Aperte "ENTER" para focar no quadro de produtos.</span>`;
-		html += `<span class="help-block pull-right infoprod" ${cssSpan}>PRODUTO NÃO ENCONTRADO NESTA TABELA.</span>`;
-		html += '</div>';
-
-		$('#showProductInput').append(html);
-
-		$('.infoprod').hide();
-		$('#nome_produto').focus();
-
-		if (valor > 0) {
-			$('#nome_produto').val(valor);
-			$('#nome_produto').focus();
-		}
-
-		$('#nome_produto').on('keyup', function (e) {
-			let value = $.trim($(this).val()).replace("#", "!hashtag!").replace("@", "!arroba!").replace("$", "!dollar!");
-			let id_tabela = $('#id_tabela_venda').val();
-
-			$.ajax({
-				url: `webservices/listarProdutosModal.php`,
-				data: 'nome_produto=' + value + '&id_tabela=' + id_tabela,
-				dataType: 'json',
-
-				success: function (data) {
-					var cssSelect = 'style="height: 300px; margin-top: 40px"';
-					var html1 = '';
-					html1 += `<select multiple class="select2 form-control selectProd" autofocus ${cssSelect}>`;
-
-					for (let i = 0; i < data.length; i++) {
-
-						var id_produto = data[i].id;
-
-						var nome = (data[i].nome);
-						var valor = parseFloat(data[i].valor_venda);
-						var valor_exibir = 'R$ '
-						var estoque = data[i].estoque;
-						var valor_avista = data[i].valor_avista;
-						var cb = data[i].codigobarras;
-						var codigo = data[i].codigo;
-						var codigo_interno = data[i].codigo_interno;
-						var unidade = data[i].unidade;
-						let info_produto = unidade ? `${codigo} - ${nome} (${unidade} - ${valor_exibir}${valor}) ${codigo_interno}` : `${codigo} - ${nome} (${valor_exibir}${valor}) ${codigo_interno}`;
-
-						html1 += `<option class="todos_produtos" value="${id_produto}" estoqueProd="${estoque}" valor_avista="${valor_avista}" valorProd="${valor}" unidade="${unidade}">`;
-						html1 += ` ${info_produto} `;
-						html1 += `</option>`;
-
-					}
-					html1 += `</select>`;
-
-					if ($('#showProduct').empty()) {
-						$('#showProduct').prepend(html1);
-					}
-
-					if ($('.selectProd').is(' :empty')) {
-						$('.infoprod').show();
-						$('#showProduct').empty();
-					} else $('.infoprod').hide();
-
-					$('.selectProd').keyup(function (event) {
-
-						var idProduto = parseFloat($('.selectProd option:selected').val());
-						var nomeProd = $('.selectProd option:selected').text();
-						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
-						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
-						var valor_avista = parseFloat($('.selectProd option:selected').attr('valor_avista'));
-						var unid = ($('.selectProd option:selected').attr('unidade')) ? $('.selectProd option:selected').attr('unidade') : '';
-
-						pagamentoAVista = false;
-						controle_avista = 1;
-						controle_pagamentos = 0;
-						$('.pagamento_avista').each(function (indice, item) {
-							var i = $(item).val();
-							var p = parseInt(i);
-							controle_avista *= p;
-							controle_pagamentos = 1;
-						});
-
-						valor_venda_avista = valor_avista.toFixed(2);
-						valor_venda_normal = valorProd.toFixed(2);
-
-						if (controle_avista == 1 && controle_pagamentos == 1)
-							pagamentoAVista = true;
-
-						if (pagamentoAVista && valor_avista > 0) {
-							valorProd = valor_avista;
-						}
-
-						var qtde_produto = $('#qtde_produto').val();
-						var q = qtde_produto.replace(',', '');
-						q = parseFloat(q);
-						if (isNaN(q) || q == 0) {
-							q = 1;
-						}
-						var quantidade = q.toFixed(3);
-
-						var total = valorProd * quantidade;
-						var valor_total = total.toFixed(2);
-
-						total = valor_total;
-						valor_total = valor_total.toString();
-						valor_total = 'R$ ' + valor_total.replace('.', ',');
-
-						if (event.which == 13) {
-
-							//Este bloco não deixa um produto entrar na tabela se o registro for em branco
-							if ($('.selectProd').focus() && !idProduto) {
-								return false;
-							}
-
-							let modalActive = $('#modal_alterar_valor_produto_venda').val() == 1 ? 1 : 0;
-
-							var table = $('#tabela_produtos');
-							table.prepend(
-								`<tr style="border-collapse: collapse;">
-									<td><span class="font-md">${nomeProd}</span></td>
-									<td><span class="font-md">${unid}</span></td>
-									<td><span class="font-md">${estoqueProd}</span></td>
-									<td>
-										<span class="bold theme-font">
-											<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidade}" id="quantidade_produto">
-										</span>
-									</td>
-									<td>
-										<span class="bold theme-font">
-											<input type="text" class="form-control form-filter input-sm moeda valor" name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" value="${floatParaReal(valorProd)}" id="vlr_venda_produto" style="width: 90px">
-										</span>
-									</td>
-									<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
-									<td>
-										<a
-											href="javascript:void(0);"
-											class="btn btn_alterar_valor_produto_venda"
-											title="Alterar valor deste produto?"
-											style="background-color: #EECB00; color: #675800">
-											<i class="fa fa-dollar"></i>
-										</a>
-										<a href="javascript:void(0);" class="btn red remover_produto_venda" title="Deseja remover este produto?">
-											<i class="fa fa-times"></i>
-										</a>
-									</td>
-									<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="`+ nomeProd + `" />
-									<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
-									<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `" />
-									<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela + `" />
-									<input type="hidden" class="total" value="`+ total + `" />
-									<input type="hidden" class="estoque" value="`+ estoqueProd + `" />
-								</tr>`
-							).find("tr").first().hide();
-
-							const styles = {
-								"pointer-events": "none",
-								"background-color": "#eaeaea"
-							}
-
-							if (modalActive === 1) {
-								$('#vlr_venda_produto').css(styles);
-							}
-
-							if (modalActive === 0) $('.btn_alterar_valor_produto_venda').addClass('hidden');
-							table.find("tr").first().fadeIn();
-
-							$('.quant_venda').maskMoney({ decimal: '.', precision: 3, symbolStay: false, allowNegative: false });
-							$('#vlr_venda_produto').maskMoney({ symbol: 'R$ ', thousands: '.', decimal: ',', precision: 2, symbolStay: true, allowNegative: true });
-
-							$('.todos_produtos').focus();
-
-							var soma = 0;
-							$('.total').each(function (indice, item) {
-								var i = $(item).val();
-								var v = parseFloat(i);
-								vlr = v.toFixed(2);
-								if (!isNaN(v)) {
-									soma += parseFloat(vlr);
-								}
-							});
-							soma = soma.toFixed(2);
-
-							$("#valor").val(soma);
-							var resultado = soma.toString();
-							resultado = 'R$ ' + resultado.replace('.', ',');
-							$("#valor2").text(resultado);
-							$('#valor_total_modal').val(resultado);
-
-							var desconto = $('#valor_desconto_modal').val();
-							var d = desconto.replace('.', '');
-							d = d.replace(',', '.');
-							d = d.replace('R$ ', '');
-							d = parseFloat(d);
-							if (isNaN(d)) {
-								d = 0;
-							}
-
-							if (d > 0) {
-								$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
-							}
-
-							var acrescimo = $("#valor_acrescimo_modal").val();
-							var a = acrescimo.replace('.', '');
-							a = a.replace(',', '.');
-							a = a.replace('R$ ', '');
-							a = parseFloat(a);
-							if (isNaN(a)) {
-								a = 0;
-							}
-
-							var valor_pagar = soma + a - d;
-							valor_pagar = valor_pagar.toFixed(2);
-							valor_pagar = valor_pagar.toString();
-							valor_pagar = valor_pagar.replace('.', ',');
-							$('#valor_pagar').text('R$ ' + valor_pagar);
-
-							var valor = $("#valor").val();
-							var v = parseFloat(valor);
-							if (isNaN(v)) {
-								v = 0;
-							}
-
-							var desconto = $('#valor_desconto_modal').val();
-							var d = desconto.replace('.', '');
-							d = d.replace(',', '.');
-							d = d.replace('R$ ', '');
-							d = parseFloat(d);
-							if (isNaN(d)) {
-								d = 0;
-							}
-							var soma = 0;
-							$('.valor_pago').each(function (indice, item) {
-								var i = $(item).val();
-								var p = parseFloat(i);
-								if (!isNaN(p)) {
-									soma += p;
-								}
-							});
-							var soma_dinheiro = 0;
-							$('.dinheiro').each(function (indice, item) {
-								var i = $(item).val();
-								var p = parseFloat(i);
-								if (!isNaN(p)) {
-									soma_dinheiro += p;
-								}
-							});
-
-							var valor_pagar = v + a - d - soma;
-							if (valor_pagar < 0) {
-								valor_pagar = 0;
-							}
-							var resultado = valor_pagar.toFixed(2);
-							resultado = resultado.toString();
-							resultado = 'R$ ' + resultado.replace('.', ',');
-							$("#valor_pagar").text(resultado);
-
-							$('.valor_pago_venda').val(resultado);
-							$('#valor_pago_modal').val(resultado);
-							$('#valor_pagar_modal_pgto').val(resultado);
-							$('#show_valor_pagar_modal').val(resultado);
-
-							var soma_restante = soma - soma_dinheiro;
-							var total_pagar_dinheiro = v + a - d - soma_restante;
-							var troco = soma_dinheiro - total_pagar_dinheiro;
-
-							if (troco < 0) {
-								troco = 0;
-							}
-
-							resultado = troco.toFixed(2);
-							resultado = resultado.toString();
-							resultado = 'R$ ' + resultado.replace('.', ',');
-							$("#troco").text(resultado);
-						}
-
-					}).click(function () {
-						var idProduto = parseFloat($('.selectProd option:selected').val());
-
-						if (isNaN(idProduto)) idProduto = 0;
-
-						var nomeProd = $('.selectProd option:selected').text();
-						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
-						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
-						var valor_avista = parseFloat($('.selectProd option:selected').attr('valor_avista'));
-						var unid = ($('.selectProd option:selected').attr('unidade')) ? $('.selectProd option:selected').attr('unidade') : '';
-
-						pagamentoAVista = false;
-						controle_avista = 1;
-						controle_pagamentos = 0;
-						$('.pagamento_avista').each(function (indice, item) {
-							var i = $(item).val();
-							var p = parseInt(i);
-							controle_avista *= p;
-							controle_pagamentos = 1;
-						});
-
-						valor_venda_avista = valor_avista.toFixed(2);
-						valor_venda_normal = valorProd.toFixed(2);
-
-						if (controle_avista == 1 && controle_pagamentos == 1)
-							pagamentoAVista = true;
-
-						if (pagamentoAVista && valor_avista > 0) {
-							valorProd = valor_avista;
-						}
-
-						var qtde_produto = $('#qtde_produto').val();
-						var q = qtde_produto.replace(',', '');
-						q = parseFloat(q);
-						if (isNaN(q) || q == 0) {
-							q = 1;
-						}
-						var quantidade = q.toFixed(3);
-
-						var total = valorProd * quantidade;
-						var valor_total = total.toFixed(2);
-
-						total = valor_total;
-						valor_total = valor_total.toString();
-						valor_total = 'R$ ' + valor_total.replace('.', ',');
-
-						let modalActive = $('#modal_alterar_valor_produto_venda').val() == 1 ? 1 : 0;
-
-						var table = $('#tabela_produtos');
-
-						if (idProduto > 0) {
-							table.prepend(
-								`<tr style="border-collapse: collapse;">
-									<td><span class="font-md">${nomeProd}</span></td>
-									<td><span class="font-md">${unid}</span></td>
-									<td><span class="font-md">${estoqueProd}</span></td>
-									<td>
-										<span class="bold theme-font">
-										<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidade}" id="quantidade_produto"></span>
-									</td>
-									<td>
-										<span class="bold theme-font">
-											<input type="text" class="form-control form-filter input-sm moeda valor input-valor-normal" name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" value="${floatParaReal(valorProd)}" id="vlr_venda_produto" style="width: 90px">
-										</span>
-									</td>
-									<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
-									<td>
-										<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" title="Alterar valor deste produto?" style="background-color: #EECB00; color: #675800">
-											<i class="fa fa-dollar"></i>
-										</a>
-										<a href="javascript:void(0);" class="btn red remover_produto_venda" title="Deseja remover este produto?">
-										<i class="fa fa-times"></i></a>
-									</td>
-									<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="`+ nomeProd + `" />
-									<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
-									<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `">
-									<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela + `">
-									<input type="hidden" class="total" value="`+ total + `" />
-									<input type="hidden" class="estoque" value="`+ estoqueProd + `">
-								</tr>`
-							).find("tr").first().hide();
-
-							if (modalActive == 1) {
-								let inputValorNormal = document.querySelector(".input-valor-normal")
-								inputValorNormal.disabled = true
-							}
-
-							const styles = {
-								"pointer-events": "none",
-								"background-color": "#eaeaea"
-							}
-
-							if (modalActive === 1) {
-								$('#vlr_venda_produto').css(styles);
-							}
-
-							if (modalActive === 0) $('.btn_alterar_valor_produto_venda').addClass('hidden');
-							table.find("tr").first().fadeIn();
-						}
-
-						$('.quant_venda').maskMoney({ decimal: '.', precision: 3, symbolStay: false, allowNegative: false });
-						$('#vlr_venda_produto').maskMoney({ symbol: 'R$ ', thousands: '.', decimal: ',', precision: 2, symbolStay: true, allowNegative: true });
-
-						var soma = 0;
-						$('.total').each(function (indice, item) {
-							var i = $(item).val();
-							var v = parseFloat(i);
-							vlr = v.toFixed(2);
-							if (!isNaN(v)) {
-								soma += parseFloat(vlr);
-							}
-						});
-						soma = soma.toFixed(2);
-
-						$("#valor").val(soma);
-						var resultado = soma.toString();
-						resultado = 'R$ ' + resultado.replace('.', ',');
-						$("#valor2").text(resultado);
-						$('#valor_total_modal').val(resultado);
-
-						var desconto = $("#valor_desconto_modal").val();
-						var d = desconto.replace('.', '');
-						d = d.replace(',', '.');
-						d = d.replace('R$ ', '');
-						d = parseFloat(d);
-						if (isNaN(d)) {
-							d = 0;
-						}
-
-						if (d > 0) {
-							$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
-						}
-
-						var acrescimo = $("#valor_acrescimo_modal").val();
-						var a = acrescimo.replace('.', '');
-						a = a.replace(',', '.');
-						a = a.replace('R$ ', '');
-						a = parseFloat(a);
-						if (isNaN(a)) {
-							a = 0;
-						}
-
-						var valor_pagar = soma + a - d;
-						valor_pagar = valor_pagar.toFixed(2);
-						valor_pagar = valor_pagar.toString();
-						valor_pagar = valor_pagar.replace('.', ',');
-						$('#valor_pagar').text('R$ ' + valor_pagar);
-
-						$('.valor_pago_venda').val(resultado);
-						$('#valor_pago_modal').val(resultado);
-						$('#valor_pagar_modal_pgto').val(resultado);
-						$('#show_valor_pagar_modal').val(resultado);
-
-						var valor = $("#valor").val();
-						var v = parseFloat(valor);
-						if (isNaN(v)) {
-							v = 0;
-						}
-
-						var desconto = $('#valor_desconto_modal').val();
-						var d = desconto.replace('.', '');
-						d = d.replace(',', '.');
-						d = d.replace('R$ ', '');
-						d = parseFloat(d);
-						if (isNaN(d)) {
-							d = 0;
-						}
-						var soma = 0;
-						$('.valor_pago').each(function (indice, item) {
-							var i = $(item).val();
-							var p = parseFloat(i);
-							if (!isNaN(p)) {
-								soma += p;
-							}
-						});
-						var soma_dinheiro = 0;
-						$('.dinheiro').each(function (indice, item) {
-							var i = $(item).val();
-							var p = parseFloat(i);
-							if (!isNaN(p)) {
-								soma_dinheiro += p;
-							}
-						});
-
-						var valor_pagar = v + a - d - soma;
-						if (valor_pagar < 0) {
-							valor_pagar = 0;
-						}
-						var resultado = valor_pagar.toFixed(2);
-						resultado = resultado.toString();
-						resultado = 'R$ ' + resultado.replace('.', ',');
-						$("#valor_pagar").text(resultado);
-						$('#valor_pago_modal').val(resultado);
-						$('#valor_pagar_modal_pgto').val(resultado);
-
-						var soma_restante = soma - soma_dinheiro;
-						var total_pagar_dinheiro = v + a - d - soma_restante;
-						var troco = soma_dinheiro - total_pagar_dinheiro;
-
-						if (troco < 0) {
-							troco = 0;
-						}
-
-						resultado = troco.toFixed(2);
-						resultado = resultado.toString();
-						resultado = 'R$ ' + resultado.replace('.', ',');
-						$("#troco").text(resultado);
-					});
-				}
-			});
-		});
+	$('.modal_adicionar_produto').click(function () {
+		modalProdutosComF1();
 	});
+
+	//#endregion MÓDULO: PDV F1
 
 	//PASSAR MOUSE POR CIMA E MOSTRAR PREÇO DO PRODUTO
 	$(document).on('mouseenter', '.todos_produtos', function (e) {

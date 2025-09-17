@@ -5128,8 +5128,7 @@ if (!$usuario->is_Todos())
 				<div id="foorter-buttons">
 					<div class="row" id="row_footer_buttons">
 						<div class="col-md-3" style="width: 145px;">
-							<button type="button" class="btn yellow-saffron modal_adicionar_produto" data-toggle="modal"
-								data-target="#modal_produtos">
+								<button type="button" class="btn yellow-saffron modal_adicionar_produto">
 								<i class="fa fa-plus-square">&nbsp;</i>
 								<?php echo lang('PRODUTOS'); ?> (F1)
 							</button>

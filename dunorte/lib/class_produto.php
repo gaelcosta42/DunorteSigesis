@@ -276,6 +276,7 @@ class Produto
 		$row = false;
 		$nome_produto = post('produto');
 		$codigo = post('codigo');
+
 		if ($nome_produto) {
 			$prod = explode(" ", $nome_produto);
 			$whereproduto = "";
@@ -284,8 +285,9 @@ class Produto
 				$whereproduto .= " AND p.nome LIKE '%" . $prod[$i] . "%'";
 			}
 		}
+
 		if ($codigo) {
-			$sql = "SELECT p.*, c.categoria, g.grupo, fa.fabricante "
+			$sql = "SELECT p.*, c.categoria, g.grupo, g.idcor AS idcolor, fa.fabricante "
 				. "\n FROM produto as p"
 				. "\n LEFT JOIN categoria AS c ON c.id = p.id_categoria"
 				. "\n LEFT JOIN grupo AS g ON g.id = p.id_grupo"
@@ -294,7 +296,7 @@ class Produto
 				. "\n ORDER BY p.nome ";
 			$row = self::$db->fetch_all($sql);
 		} elseif ($nome_produto) {
-			$sql = "SELECT p.*, c.categoria, g.grupo, fa.fabricante "
+			$sql = "SELECT p.*, c.categoria, g.grupo, g.idcor AS idcolor, fa.fabricante "
 				. "\n FROM produto as p"
 				. "\n LEFT JOIN categoria AS c ON c.id = p.id_categoria"
 				. "\n LEFT JOIN grupo AS g ON g.id = p.id_grupo"
@@ -459,280 +461,317 @@ class Produto
 	 *
 	 * @return
 	 */
-	public function processarProduto()
-	{
+	public function processarProduto(){
+
 		$codBarAuto = 0;
 		if (!empty($_POST['codigobarrasautomatico'])) {
 			$id_empresa = session('idempresa');
 			$cnpj_empresa = getValue("cnpj", "empresa", "id=" . $id_empresa);
 			$codBarAuto = gerarCodigoBarrasAutomatico($cnpj_empresa, self::$db);
-		} else if (!empty($_POST['codigobarras'])) {
+		} elseif (!empty($_POST['codigobarras'])) {
 			$codigobarras = sanitize(post('codigobarras'));
-			$where = (Filter::$id) ? "AND id <> " . Filter::$id : "";
-			$sql = "SELECT nome FROM produto WHERE inativo = 0 AND codigobarras = '$codigobarras' $where ";
-			$row = self::$db->first($sql);
-			if ($row)
-				Filter::$msgs['codigobarras'] = str_replace("[PRODUTO]", $row->nome, lang('MSG_ERRO_CODBARRAS_CADASTRADO'));
+			$where        = (Filter::$id) ? "AND id <> " . Filter::$id : "";
+			$sql          = "SELECT nome FROM produto WHERE inativo = 0 AND codigobarras = '$codigobarras' $where";
+			$row          = self::$db->first($sql);
+
+			if ($row) {
+				Filter::$msgs['codigobarras'] = str_replace(
+					"[PRODUTO]",
+					$row->nome,
+					lang('MSG_ERRO_CODBARRAS_CADASTRADO')
+				);
+			}
 		}
 
 		$tipo_sistema = getValue('tipo_sistema', 'empresa', 'inativo=0');
 
-		if (empty($_POST['nome']))
-			Filter::$msgs['nome'] = lang('MSG_ERRO_NOME');
+		$regrasObrigatorias = [
+			'nome'     => [
+				'cond' => empty($_POST['nome']),
+				'msg'  => 'MSG_ERRO_NOME'
+			],
+			'ncm'      => [
+				'cond' => empty($_POST['ncm']) && $tipo_sistema != 2,
+				'msg'  => 'MSG_ERRO_NCM'
+			],
+			'icms_cst' => [
+				'cond' => empty($_POST['icms_cst']) && $tipo_sistema != 2,
+				'msg'  => 'MSG_ERRO_ICMS_CST'
+			],
+			'cfop'     => [
+				'cond' => empty($_POST['cfop']) && $tipo_sistema != 2,
+				'msg'  => 'MSG_ERRO_CFOP'
+			],
+			'unidade'  => [
+				'cond' => empty($_POST['unidade']),
+				'msg'  => 'MSG_ERRO_UNIDADE'
+			],
+			'valor_partida' => [
+				'cond' => !empty($_POST['cod_anp']) 
+					&& $_POST['cod_anp'] === '210203001' 
+					&& empty($_POST['valor_partida']),
+				'msg'  => 'MSG_ERRO_VALOR_PARTIDA'
+			],
+		];
 
-		if (empty($_POST['ncm']) && $tipo_sistema <> 2)
-			Filter::$msgs['ncm'] = lang('MSG_ERRO_NCM');
-
-		if (empty($_POST['icms_cst']) && $tipo_sistema <> 2)
-			Filter::$msgs['icms_cst'] = lang('MSG_ERRO_ICMS_CST');
-
-		if (empty($_POST['cfop']) && $tipo_sistema <> 2)
-			Filter::$msgs['cfop'] = lang('MSG_ERRO_CFOP');
-
-		if (empty($_POST['unidade']))
-			Filter::$msgs['unidade'] = lang('MSG_ERRO_UNIDADE');
-
-		if (!empty($_POST['cod_anp']) && ($_POST['cod_anp'] == '210203001')) {
-			if (empty($_POST['valor_partida']))
-				Filter::$msgs['valor_partida'] = lang('MSG_ERRO_VALOR_PARTIDA');
+		foreach ($regrasObrigatorias as $campo => $regra) {
+			if ($regra['cond']) {
+				Filter::$msgs[$campo] = lang($regra['msg']);
+			}
 		}
 
-		if (empty(Filter::$msgs)) {
-			$array_unidade = explode('#', sanitize(post('unidade')));
+		if (!empty(Filter::$msgs)) {
+			print Filter::msgStatus();
+			return;
+		}
 
-			$data = array(
-				'nome' => sanitize(post('nome')),
-				'link' => post('link'),
-				'prazo_troca' => sanitize($_POST['prazo_troca']),
-				'observacao' => sanitize(post('observacao')),
-				'codigo' => sanitize(post('codigo')),
-				'codigobarras' => (post('codigobarrasautomatico')) ? $codBarAuto : limparNumero(post('codigobarras')),
-				'ncm' => limparNumero(post('ncm')),
-				'cfop' => limparNumero(post('cfop')),
-				'cfop_entrada' => limparNumero(post('cfop_entrada')),
-				'cest' => limparNumero(post('cest')),
-				'icms_cst' => limparNumero(post('icms_cst')),
-				'icms_percentual' => (post('icms_percentual')) ? converteMoeda(post('icms_percentual')) : 0,
-				'icms_percentual_st' => (post('icms_percentual_st')) ? converteMoeda(post('icms_percentual_st')) : 0,
-				'mva_percentual' => (post('mva_percentual')) ? converteMoeda(post('mva_percentual')) : 0,
-				'pis_cst' => limparNumero(post('pis_cst')),
-				'pis_aliquota' => (post('pis_aliquota')) ? converteMoeda(post('pis_aliquota')) : 0,
-				'cofins_cst' => limparNumero(post('cofins_cst')),
-				'cofins_aliquota' => (post('cofins_aliquota')) ? converteMoeda(post('cofins_aliquota')) : 0,
-				'ipi_cst' => (post('ipi_cst')) ? converteMoeda(post('ipi_cst')) : 0,
-				'ipi_saida_codigo' => intval(limparNumero(post('ipi_saida_codigo'))),
-				'anp' => sanitize(post('cod_anp')),
-				'valor_partida' => (post('valor_partida')) ? converteMoeda(post('valor_partida')) : 0,
-				'unidade' => $array_unidade[0],
-				'unidade_tributavel' => sanitize(post('unidade_tributavel')),
-				'descricao_unidade' => $array_unidade[1],
-				'detalhamento' => sanitize(post('detalhamento')),
-				'valor_custo' => (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 0,
-				'valor_avista' => (post('valor_avista')) ? converteMoeda(post('valor_avista')) : 0,
-				'valor_mercado' => (post('valor_mercado')) ? converteMoeda(post('valor_mercado')) : 0,
-				'valor_comissao' => (post('valor_comissao')) ? converteMoeda(post('valor_comissao')) : 0,
-				'valor_despesas' => (post('valor_despesas')) ? converteMoeda(post('valor_despesas')) : 0,
-				'valor_frete' => (post('valor_frete')) ? converteMoeda(post('valor_frete')) : 0,
-				'id_grupo' => intval(sanitize(post('id_grupo'))),
-				'id_categoria' => intval(sanitize(post('id_categoria'))),
-				'id_fabricante' => intval(sanitize(post('id_fabricante'))),
-				'grade' => (post('grade')) ? sanitize(post('grade')) : 0,
-				'kit' => (post('kit')) ? sanitize(post('kit')) : 0,
-				'peso' => (post('peso')) ? converteDecimal3(post('peso')) : 0,
-				'estoque_minimo' => (post('estoquemin')) ? sanitize(post('estoquemin')) : 0,
-				'ecommerce' => (!empty(post('ecommerce')) ? 1 : 0),
-				'valida_estoque' => (post('valida_estoque')) ? sanitize(post('valida_estoque')) : 0,
-				'monofasico' => (post('monofasico')) ? sanitize(post('monofasico')) : 0,
-				'produto_balanca' => (post('produto_balanca')) ? sanitize(post('produto_balanca')) : 0,
-				'inativo' => '0',
-				'usuario_alteracao' => session('nomeusuario'),
-				'data_alteracao' => "NOW()",
+		$array_unidade = explode('#', sanitize(post('unidade')));
+
+		$data = array(
+			'nome' => sanitize(post('nome')),
+			'link' => post('link'),
+			'prazo_troca' => sanitize($_POST['prazo_troca']),
+			'observacao' => sanitize(post('observacao')),
+			'codigo' => sanitize(post('codigo')),
+			'codigobarras' => (post('codigobarrasautomatico')) ? $codBarAuto : limparNumero(post('codigobarras')),
+			'ncm' => limparNumero(post('ncm')),
+			'cfop' => limparNumero(post('cfop')),
+			'cfop_entrada' => limparNumero(post('cfop_entrada')),
+			'cest' => limparNumero(post('cest')),
+			'icms_cst' => limparNumero(post('icms_cst')),
+			'icms_percentual' => (post('icms_percentual')) ? converteMoeda(post('icms_percentual')) : 0,
+			'icms_percentual_st' => (post('icms_percentual_st')) ? converteMoeda(post('icms_percentual_st')) : 0,
+			'mva_percentual' => (post('mva_percentual')) ? converteMoeda(post('mva_percentual')) : 0,
+			'pis_cst' => limparNumero(post('pis_cst')),
+			'pis_aliquota' => (post('pis_aliquota')) ? converteMoeda(post('pis_aliquota')) : 0,
+			'cofins_cst' => limparNumero(post('cofins_cst')),
+			'cofins_aliquota' => (post('cofins_aliquota')) ? converteMoeda(post('cofins_aliquota')) : 0,
+			'ipi_cst' => (post('ipi_cst')) ? converteMoeda(post('ipi_cst')) : 0,
+			'ipi_saida_codigo' => intval(limparNumero(post('ipi_saida_codigo'))),
+			'anp' => sanitize(post('cod_anp')),
+			'valor_partida' => (post('valor_partida')) ? converteMoeda(post('valor_partida')) : 0,
+			'unidade' => $array_unidade[0],
+			'unidade_tributavel' => sanitize(post('unidade_tributavel')),
+			'descricao_unidade' => $array_unidade[1],
+			'detalhamento' => sanitize(post('detalhamento')),
+			'valor_custo' => (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 0,
+			'valor_avista' => (post('valor_avista')) ? converteMoeda(post('valor_avista')) : 0,
+			'valor_mercado' => (post('valor_mercado')) ? converteMoeda(post('valor_mercado')) : 0,
+			'valor_comissao' => (post('valor_comissao')) ? converteMoeda(post('valor_comissao')) : 0,
+			'valor_despesas' => (post('valor_despesas')) ? converteMoeda(post('valor_despesas')) : 0,
+			'valor_frete' => (post('valor_frete')) ? converteMoeda(post('valor_frete')) : 0,
+			'largura'     => (post('largura')) ? converteMoeda(post('largura')) : 0,
+			'comprimento' => (post('comprimento')) ? converteMoeda(post('comprimento')) : 0,
+			'id_grupo' => intval(sanitize(post('id_grupo'))),
+			'id_categoria' => intval(sanitize(post('id_categoria'))),
+			'id_fabricante' => intval(sanitize(post('id_fabricante'))),
+			'grade' => (post('grade')) ? sanitize(post('grade')) : 0,
+			'kit' => (post('kit')) ? sanitize(post('kit')) : 0,
+			'peso' => (post('peso')) ? converteDecimal3(post('peso')) : 0,
+			'estoque_minimo' => (post('estoquemin')) ? sanitize(post('estoquemin')) : 0,
+			'ecommerce' => (!empty(post('ecommerce')) ? 1 : 0),
+			'valida_estoque' => (post('valida_estoque')) ? sanitize(post('valida_estoque')) : 0,
+			'monofasico' => (post('monofasico')) ? sanitize(post('monofasico')) : 0,
+			'produto_balanca' => (post('produto_balanca')) ? sanitize(post('produto_balanca')) : 0,
+			'inativo' => '0',
+			'usuario_alteracao' => session('nomeusuario'),
+			'data_alteracao' => "NOW()",
+			'usuario' => session('nomeusuario'),
+			'data' => "NOW()"
+		);
+
+		$atualizar_valor_produto = getValue('atualizar_valor_produto', 'empresa', 'inativo=0');
+
+		if (!Filter::$id) {
+			$estoque = (post('estoque')) ? converteMoeda(post('estoque')) : 1;
+			$estoque_minimo = post('estoquemin') ?? 0;
+			$data['estoque_minimo'] = $estoque_minimo;
+			$data['ecommerce'] = (!empty(post('ecommerce')) ? 1 : 0);
+			$data['estoque'] = $estoque;
+			$id_produto = self::$db->insert(self::uTable, $data);
+
+			$data_codigo_interno['codigo_interno'] = '#' . $id_produto;
+			self::$db->update(self::uTable, $data_codigo_interno, "id=" . $id_produto);
+
+			$data_estoque = array(
+				'id_empresa' => session('idempresa'),
+				'id_produto' => $id_produto,
+				'quantidade' => $estoque,
+				'tipo' => 1,
+				'motivo' => 1,
+				'observacao' => 'AJUSTE DE ESTOQUE INICIAL',
 				'usuario' => session('nomeusuario'),
 				'data' => "NOW()"
 			);
-
-			$atualizar_valor_produto = getValue('atualizar_valor_produto', 'empresa', 'inativo=0');
-
-			if (!Filter::$id) {
-				$estoque = (post('estoque')) ? converteMoeda(post('estoque')) : 1;
-				$estoque_minimo = post('estoquemin') ?? 0;
-				$data['estoque_minimo'] = $estoque_minimo;
-				$data['ecommerce'] = (!empty(post('ecommerce')) ? 1 : 0);
-				$data['estoque'] = $estoque;
-				$id_produto = self::$db->insert(self::uTable, $data);
-
-				$data_codigo_interno['codigo_interno'] = '#' . $id_produto;
-				self::$db->update(self::uTable, $data_codigo_interno, "id=" . $id_produto);
-
-				$data_estoque = array(
-					'id_empresa' => session('idempresa'),
-					'id_produto' => $id_produto,
-					'quantidade' => $estoque,
-					'tipo' => 1,
-					'motivo' => 1,
-					'observacao' => 'AJUSTE DE ESTOQUE INICIAL',
-					'usuario' => session('nomeusuario'),
-					'data' => "NOW()"
-				);
-				self::$db->insert("produto_estoque", $data_estoque);
-				$retorno_row = $this->getTabelaPrecos();
-				$valor_venda = (post('valor_venda')) ? converteMoeda(post('valor_venda')) : 0;
-				$valor_custo = (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 0;
-				$valor_custo = ($valor_custo > 0) ? $valor_custo : 1;
-				$percentual = ($valor_venda / $valor_custo) - 1;
-				$percentual = ($percentual > 0) ? $percentual : 1;
-				if ($retorno_row) {
-					foreach ($retorno_row as $exrow) {
-						$valor_venda = (empty($_POST['valor_venda'])) ? ((1 + ($exrow->percentual / 100)) * $valor_custo) : converteMoeda(post('valor_venda'));
-						$data_tabela = array(
-							'id_tabela' => $exrow->id,
-							'id_produto' => $id_produto,
-							'percentual' => ($percentual == 1) ? $exrow->percentual : $percentual * 100,
-							'valor_venda' => round($valor_venda, 2),
-							'usuario' => session('nomeusuario'),
-							'data' => "NOW()"
-						);
-						self::$db->insert("produto_tabela", $data_tabela);
-					}
-				} else {
-					$data_tabela_preco = array(
-						'tabela' => 'PADRAO',
-						'percentual' => $percentual * 100,
-						'usuario' => session('nomeusuario'),
-						'data' => "NOW()"
-					);
-					$id_tabela = self::$db->insert("tabela_precos", $data_tabela_preco);
+			self::$db->insert("produto_estoque", $data_estoque);
+			$retorno_row = $this->getTabelaPrecos();
+			$valor_venda = (post('valor_venda')) ? converteMoeda(post('valor_venda')) : 0;
+			$valor_custo = (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 0;
+			$valor_custo = ($valor_custo > 0) ? $valor_custo : 1;
+			$percentual = ($valor_venda / $valor_custo) - 1;
+			$percentual = ($percentual > 0) ? $percentual : 1;
+			if ($retorno_row) {
+				foreach ($retorno_row as $exrow) {
+					$valor_venda = (empty($_POST['valor_venda'])) ? ((1 + ($exrow->percentual / 100)) * $valor_custo) : converteMoeda(post('valor_venda'));
 					$data_tabela = array(
-						'id_tabela' => $id_tabela,
+						'id_tabela' => $exrow->id,
 						'id_produto' => $id_produto,
-						'percentual' => $percentual * 100,
-						'valor_venda' => converteMoeda(post('valor_venda')),
+						'percentual' => ($percentual == 1) ? $exrow->percentual : $percentual * 100,
+						'valor_venda' => round($valor_venda, 2),
 						'usuario' => session('nomeusuario'),
 						'data' => "NOW()"
 					);
 					self::$db->insert("produto_tabela", $data_tabela);
 				}
 			} else {
-				$id_produto = Filter::$id;
-				$novo_valor_custo = (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 1;
+				$data_tabela_preco = array(
+					'tabela' => 'PADRAO',
+					'percentual' => $percentual * 100,
+					'usuario' => session('nomeusuario'),
+					'data' => "NOW()"
+				);
+				$id_tabela = self::$db->insert("tabela_precos", $data_tabela_preco);
+				$data_tabela = array(
+					'id_tabela' => $id_tabela,
+					'id_produto' => $id_produto,
+					'percentual' => $percentual * 100,
+					'valor_venda' => converteMoeda(post('valor_venda')),
+					'usuario' => session('nomeusuario'),
+					'data' => "NOW()"
+				);
+				self::$db->insert("produto_tabela", $data_tabela);
+			}
+		} else {
+			$id_produto = Filter::$id;
+			$novo_valor_custo = (post('valor_custo')) ? converteMoeda(post('valor_custo')) : 1;
 
-				//Verificar se este produto é kit de outro.
-				$checkKit = $this->verificaSeProdutoVirouKit($id_produto);
-				if ($checkKit) {
-					foreach ($checkKit as $key) {
-						$id_produto_compoe_kit = $key->id_produto ? $key->id_produto : 0;
-						if ($id_produto_compoe_kit) {
-							if ($id_produto == $id_produto_compoe_kit) {
+			$checkKit = $this->verificaSeProdutoVirouKit($id_produto);
+			if ($checkKit) {
+				foreach ($checkKit as $key) {
+					$id_produto_compoe_kit = $key->id_produto ? $key->id_produto : 0;
+					if ($id_produto_compoe_kit && $id_produto == $id_produto_compoe_kit) {
 
-								$valor_custo_total = round($this->getValorCustoProdutokit($key->id_produto_kit), 2);
-								$valor_custo_atualizado = $valor_custo_total - $key->valor_custo + $novo_valor_custo;
+						$valor_custo_total = round($this->getValorCustoProdutokit($key->id_produto_kit), 2);
+						$valor_custo_atualizado = $valor_custo_total - $key->valor_custo + $novo_valor_custo;
 
-								$data_produto = array(
-									'valor_custo' => $valor_custo_atualizado,
-									'usuario_alteracao' => session('nomeusuario'),
-									'data_alteracao' => "NOW()",
-									'usuario' => session('nomeusuario'),
-									'data' => "NOW()"
-								);
-								self::$db->update(self::uTable, $data_produto, "id=" . $key->id_produto_kit);
+						$data_produto = [
+							'valor_custo'        => $valor_custo_atualizado,
+							'usuario_alteracao'  => session('nomeusuario'),
+							'data_alteracao'     => "NOW()",
+							'usuario'            => session('nomeusuario'),
+							'data'               => "NOW()"
+						];
+						self::$db->update(self::uTable, $data_produto, "id=" . $key->id_produto_kit);
 
-								$retorno_row = $this->getTabelaPrecos();
-								if ($retorno_row) {
-									foreach ($retorno_row as $exrow) {
-										$percentual = getValue("percentual", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $key->id_produto_kit);
-										$novo_valor_venda = ((1 + ((float)$percentual / 100)) * $valor_custo_atualizado);
-										$valor_venda_atual = getValue("valor_venda", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $key->id_produto_kit);
-										$novo_percentual = ((float)$valor_venda_atual / $valor_custo_atualizado) - 1;
-
-										if ($atualizar_valor_produto) {
-											if ($novo_valor_venda > $valor_venda_atual) {
-												$data_tabela_novo = array(
-													'percentual' => $percentual,
-													'valor_venda' => round($novo_valor_venda, 2),
-													'usuario' => session('nomeusuario'),
-													'data' => "NOW()"
-												);
-											} else {
-												$data_tabela_novo = array(
-													'percentual' => $novo_percentual * 100,
-													'usuario' => session('nomeusuario'),
-													'data' => "NOW()"
-												);
-											}
-											self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $key->id_produto_kit);
-										} else {
-											$data_tabela_novo = array(
-												'percentual' => $novo_percentual * 100,
-												'usuario' => session('nomeusuario'),
-												'data' => "NOW()"
-											);
-											self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $key->id_produto_kit);
-										}
-									}
-								}
-							}
-						}
+						// 👉 chamada única para recalcular preços do kit
+						$this->atualizarTabelaPrecos($key->id_produto_kit, $valor_custo_atualizado, $atualizar_valor_produto);
 					}
 				}
+			}
 
-				$retorno_row = $this->getTabelaPrecos();
-				if ($retorno_row) {
-					foreach ($retorno_row as $exrow) {
-						$percentual = getValue("percentual", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
-						$novo_valor_venda = ((1 + ((float)$percentual / 100)) * $novo_valor_custo);
-						$valor_venda_atual = getValue("valor_venda", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
-						$novo_percentual = ((float)$valor_venda_atual / $novo_valor_custo) - 1;
-						if ($atualizar_valor_produto) {
-							if ($novo_valor_venda > $valor_venda_atual) {
-								$data_tabela_novo = array(
-									'percentual' => $percentual,
-									'valor_venda' => round($novo_valor_venda, 2),
-									'usuario' => session('nomeusuario'),
-									'data' => "NOW()"
-								);
-							} else {
-								$data_tabela_novo = array(
-									'percentual' => $novo_percentual * 100,
-									'usuario' => session('nomeusuario'),
-									'data' => "NOW()"
-								);
-							}
-							self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+			$this->atualizarTabelaPrecos($id_produto, $novo_valor_custo, $atualizar_valor_produto);
+
+			$retorno_row = $this->getTabelaPrecos();
+			if ($retorno_row) {
+				foreach ($retorno_row as $exrow) {
+					$percentual = getValue("percentual", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+					$novo_valor_venda = ((1 + ((float)$percentual / 100)) * $novo_valor_custo);
+					$valor_venda_atual = getValue("valor_venda", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+					$novo_percentual = ((float)$valor_venda_atual / $novo_valor_custo) - 1;
+					if ($atualizar_valor_produto) {
+						if ($novo_valor_venda > $valor_venda_atual) {
+							$data_tabela_novo = array(
+								'percentual' => $percentual,
+								'valor_venda' => round($novo_valor_venda, 2),
+								'usuario' => session('nomeusuario'),
+								'data' => "NOW()"
+							);
 						} else {
 							$data_tabela_novo = array(
 								'percentual' => $novo_percentual * 100,
 								'usuario' => session('nomeusuario'),
 								'data' => "NOW()"
 							);
-
-							self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
 						}
+						self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+					} else {
+						$data_tabela_novo = array(
+							'percentual' => $novo_percentual * 100,
+							'usuario' => session('nomeusuario'),
+							'data' => "NOW()"
+						);
+
+						self::$db->update("produto_tabela", $data_tabela_novo, "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
 					}
 				}
-				$data['codigo_interno'] = post('codigo_interno') ? post('codigo_interno') : '';
-
-				self::$db->update(self::uTable, $data, "id=" . Filter::$id);
 			}
+			$data['codigo_interno'] = post('codigo_interno') ? post('codigo_interno') : '';
 
-			$message = (Filter::$id) ? lang('PRODUTO_AlTERADO_OK') : lang('PRODUTO_ADICIONADO_OK');
+			self::$db->update(self::uTable, $data, "id=" . Filter::$id);
+		}
 
-			$o_grupo = post('o_grupo');
-			$o_categoria = post('o_categoria');
-			$ogrupo = '&id_grupo=' . $o_grupo;
-			$ocategoria = '&id_categoria=' . $o_categoria;
-			if (isset($_POST["novo"])) {
-				$redirecionar = "index.php?do=produto&acao=adicionar";
-			} else {
-				$redirecionar = "index.php?do=produto&acao=editar&id=" . $id_produto;
-			}
+		$message = Filter::$id ? lang('PRODUTO_AlTERADO_OK') : lang('PRODUTO_ADICIONADO_OK');
 
-			if (self::$db->affected()) {
-				Filter::msgOk($message, $redirecionar);
-			} else
-				Filter::msgAlert(lang('NAOPROCESSADO'));
-		} else
-			print Filter::msgStatus();
+		$o_grupo    = post('o_grupo');
+		$o_categoria = post('o_categoria');
+		$ogrupo      = '&id_grupo=' . $o_grupo;
+		$ocategoria  = '&id_categoria=' . $o_categoria;
+
+		$redirecionar = isset($_POST["novo"])
+			? "index.php?do=produto&acao=adicionar"
+			: "index.php?do=produto&acao=editar&id=" . $id_produto;
+
+		if (self::$db->affected()) {
+			Filter::msgOk($message, $redirecionar);
+		} else {
+			Filter::msgAlert(lang('NAOPROCESSADO'));
+		}
 	}
+
+	private function atualizarTabelaPrecos($id_produto, $novo_valor_custo, $atualizar_valor_produto){
+		$retorno_row = $this->getTabelaPrecos();
+		if (!$retorno_row) {
+			return;
+		}
+
+		foreach ($retorno_row as $exrow) {
+			$percentual = getValue("percentual", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+			$valor_venda_atual = getValue("valor_venda", "produto_tabela", "id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto);
+
+			$novo_valor_venda = ((1 + ((float)$percentual / 100)) * $novo_valor_custo);
+			$novo_percentual  = ((float)$valor_venda_atual / $novo_valor_custo) - 1;
+
+			if ($atualizar_valor_produto) {
+				if ($novo_valor_venda > $valor_venda_atual) {
+					$data_tabela_novo = [
+						'percentual' => $percentual,
+						'valor_venda' => round($novo_valor_venda, 2),
+						'usuario'     => session('nomeusuario'),
+						'data'        => "NOW()"
+					];
+				} else {
+					$data_tabela_novo = [
+						'percentual' => $novo_percentual * 100,
+						'usuario'    => session('nomeusuario'),
+						'data'       => "NOW()"
+					];
+				}
+			} else {
+				$data_tabela_novo = [
+					'percentual' => $novo_percentual * 100,
+					'usuario'    => session('nomeusuario'),
+					'data'       => "NOW()"
+				];
+			}
+
+			self::$db->update(
+				"produto_tabela",
+				$data_tabela_novo,
+				"id_tabela=" . $exrow->id . " AND id_produto=" . $id_produto
+			);
+		}
+	}
+
 
 	/**
 	 * Produto::obterProdutosSemCodigoDeBarras()
@@ -2798,7 +2837,7 @@ class Produto
 		$wgrupo = ($id_grupo) ? "AND p.id_grupo = " . $id_grupo : "";
 		$wcategoria = ($id_categoria) ? "AND p.id_categoria = " . $id_categoria : "";
 		$wfabricante = ($id_fabricante) ? "AND p.id_fabricante = " . $id_fabricante : "";
-		$sql = "SELECT p.id, p.nome, p.codigo, p.estoque, p.estoque_minimo, p.codigobarras, g.grupo "
+		$sql = "SELECT p.id, p.nome, p.codigo, p.estoque, p.estoque_minimo, p.codigobarras, g.grupo, g.idcor as cor_grupo"
 			. "\n FROM produto as p"
 			. "\n LEFT JOIN grupo as g ON g.id = p.id_grupo"
 			. "\n WHERE p.inativo = 0 "
@@ -3865,6 +3904,16 @@ class Produto
 				'usuario' => session('nomeusuario'),
 				'data' => "NOW()"
 			);
+			switch($produto_tipo_item) {
+                case '01':
+                case '1':
+                case '02':
+                case '2':
+                case '07':
+                case '7':
+                    $data['grade'] = 0;
+
+            }
 			$id_produto = self::$db->insert("produto", $data);
 			$retorno_row = $this->getTabelaPrecos();
 			$valor_venda = str_replace('R$ ', '', $_POST['valor_venda']);

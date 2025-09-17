@@ -67,6 +67,8 @@
 							$cnpj_empresa = (array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Tomador_IdentificacaoTomador_CpfCnpj_Cnpj',$array_nodes)) ? $array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Tomador_IdentificacaoTomador_CpfCnpj_Cnpj'] : $cnpj_empresa;
 							$cnpj_empresa = (array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Tomador_IdentificacaoTomador_CpfCnpj_Cpf',$array_nodes)) ? $array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Tomador_IdentificacaoTomador_CpfCnpj_Cpf'] : $cnpj_empresa;
 							$cnpj_empresa = limparCPF_CNPJ($cnpj_empresa);
+							$cnpj_empresa = (array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_TomadorServico_IdentificacaoTomador_CpfCnpj_Cnpj',$array_nodes)) ? $array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_TomadorServico_IdentificacaoTomador_CpfCnpj_Cnpj'] : $cnpj_empresa;
+							$cnpj_empresa = (array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_TomadorServico_IdentificacaoTomador_CpfCnpj_Cpf',$array_nodes)) ? $array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_TomadorServico_IdentificacaoTomador_CpfCnpj_Cpf'] : $cnpj_empresa;
 							$id_empresa = checkEmpresa($cnpj_empresa);
 							$complemento = (array_key_exists('PrestadorServico_Endereco_Complemento',$array_nodes)) ? $array_nodes['PrestadorServico_Endereco_Complemento'] : '';
 							$inscricao = (array_key_exists('PrestadorServico_IdentificacaoPrestador_InscricaoEstadual',$array_nodes)) ? $array_nodes['PrestadorServico_IdentificacaoPrestador_InscricaoEstadual'] : '';
@@ -83,7 +85,13 @@
 								$cpf_cnpj = limparCPF_CNPJ($array_nodes['PrestadorServico_IdentificacaoPrestador_CpfCnpj_Cnpj']);
 								$tipo = 1;
 							}
-
+							elseif(array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Prestador_CpfCnpj_Cnpj',$array_nodes)) {
+								$cpf_cnpj = limparCPF_CNPJ($array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Prestador_CpfCnpj_Cnpj']);
+								$tipo = 1;
+							} elseif(array_key_exists('DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Prestador_CpfCnpj_Cpf',$array_nodes)) {
+								$cpf_cnpj = limparCPF_CNPJ($array_nodes['DeclaracaoPrestacaoServico_InfDeclaracaoPrestacaoServico_Prestador_CpfCnpj_Cpf']);
+								$tipo = 2;
+							}
 							$empresa_cnpj = getValue('cnpj', 'empresa', "'inativo'=0");
 
 							if($cnpj_empresa != $empresa_cnpj){

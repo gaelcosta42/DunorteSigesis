@@ -907,11 +907,18 @@ class Faturamento
 	{
 		$id_venda = getValue("id_venda", "nota_fiscal", "id = " . $id_nota);
 		if ($id_venda) {
-			$sql = "SELECT cf.valor_pago as valor, cf.data_vencimento as data_pagamento"
+			$sql = "SELECT cf.id as id_pagamento, cf.valor_pago as valor, cf.data_vencimento as data_pagamento"
 				. "\n FROM cadastro_financeiro as cf "
 				. "\n LEFT JOIN tipo_pagamento as tp ON tp.id = cf.tipo "
 				. "\n WHERE cf.inativo=0 AND tp.exibir_nfe=1 AND cf.id_venda = $id_venda "
-				. "\n ORDER BY cf.data_vencimento, cf.id ";
+				. "\n AND cf.id NOT IN (SELECT id_pagamento FROM receita WHERE id_venda=$id_venda) "
+				. "\n UNION "
+				. "\n SELECT r.id as id_pagamento, r.valor_pago as valor, r.data_pagamento "
+				. "\n FROM receita as r "
+				. "\n LEFT JOIN tipo_pagamento as tp ON tp.id = r.tipo "
+				. "\n WHERE r.inativo = 0 AND tp.exibir_nfe = 1 AND r.id_venda=$id_venda "
+				. "\n ORDER BY data_pagamento, id_pagamento ";
+
 		} else {
 			$sql = "SELECT r.*, tp.exibir_nfe "
 				. "\n FROM receita as r "

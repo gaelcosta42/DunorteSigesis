@@ -293,6 +293,8 @@ function lang($phrase)
 		'RECIBO_NAO_FISCAL' => 'Recibo não fiscal',
 		'VALOR_RESTANTE' => 'Valor restante',
 		'VALOR_ITENS' => 'Valor itens',
+		'COMPRIMENTO' => 'Comprimento',
+		'LARGURA' => 'Largura',
 		'VALOR_TOTAL' => 'Valor total',
 		'VALOR_LIQUIDO' => 'Valor líquido',
 		'VALOR_UNITARIO' => 'Valor unitário',
