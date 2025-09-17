@@ -1,0 +1,12 @@
+[05-May-2022 08:30:35 America/Argentina/Buenos_Aires] PHP Warning:  Invalid argument supplied for foreach() in /home/sigesiscom/public_html/sigen1/webservices/app/usuario_app.php on line 52
+[05-May-2022 16:21:40 America/Argentina/Buenos_Aires] PHP Warning:  Invalid argument supplied for foreach() in /home/sigesiscom/public_html/sigen1/webservices/app/usuario_app.php on line 52
+[05-May-2022 16:22:37 America/Argentina/Buenos_Aires] PHP Warning:  Invalid argument supplied for foreach() in /home/sigesiscom/public_html/sigen1/webservices/app/usuario_app.php on line 52
+[05-May-2022 16:22:45 America/Argentina/Buenos_Aires] PHP Warning:  Invalid argument supplied for foreach() in /home/sigesiscom/public_html/sigen1/webservices/app/usuario_app.php on line 52
+[12-Jul-2022 09:28:34 America/Argentina/Buenos_Aires] PHP Fatal error:  Uncaught Error: Using $this when not in object context in /home/sigesiscom/public_html/testen1/webservices/app/vendas_crediario.php:300
+Stack trace:
+#0 {main}
+  thrown in /home/sigesiscom/public_html/testen1/webservices/app/vendas_crediario.php on line 300
+[12-Jul-2022 09:30:21 America/Argentina/Buenos_Aires] PHP Fatal error:  Uncaught Error: Using $this when not in object context in /home/sigesiscom/public_html/testen1/webservices/app/vendas_crediario.php:300
+Stack trace:
+#0 {main}
+  thrown in /home/sigesiscom/public_html/testen1/webservices/app/vendas_crediario.php on line 300

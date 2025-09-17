@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="google-signin-client_id"
+        content="946482978610-k1u8s8a0cm3ke6ao9tqbtojskb6v29nu.apps.googleusercontent.com">
+
+  <meta content="yes" name="apple-mobile-web-app-capable">
+  <meta content="black" name="apple-mobile-web-status-bar-style">
+  <meta content="SIGESIS Pedidos" name="apple-mobile-web-app-title">
+
+  <title>SIGESIS Pedidos</title>
+  <link href="/web/manifest.json" rel="manifest">
+  <link href="https://delivery.sigedelivery.com.br/web/css/style.css" rel="stylesheet">
+  <link href="https://delivery.sigedelivery.com.br/web/img/favicon.ico" rel="shortcut icon"
+        type="image/x-icon">
+</head>
+<body>
+  <div class="loading">
+    <div class="loader"></div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/web/flutter_service_worker.js');
+      });
+    }
+  </script>
+
+  <script>
+    firebase.initializeApp({
+      apiKey: 'AIzaSyDR3405SFVLDVBtuD4AJKPi7Z-8FZwhG-k',
+      authDomain: 'sige-pedidos.firebaseapp.com',
+      projectId: 'sige-pedidos',
+      storageBucket: 'sige-pedidos.appspot.com',
+      messagingSenderId: '946482978610',
+      appId: '1:946482978610:web:307495812d24dc4e90412b',
+      measurementId: 'G-NXHVHBY5K9'
+    });
+    firebase.analytics();
+  </script>
+
+  <script src="main.dart.js" type="application/javascript"></script>
+</body>
+</html>
