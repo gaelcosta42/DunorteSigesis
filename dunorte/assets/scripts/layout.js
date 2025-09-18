@@ -9533,9 +9533,9 @@ var Layout = function () {
 	});
 
 	
-	//======================
-	//#region MÓDULO: PDV F4
-	//======================
+	///////////////////////////
+	//#region MÓDULO: PDV F4//
+	/////////////////////////
 	const formatReal = val => 'R$ ' + parseFloat(val || 0).toFixed(2).replace('.', ',');
 	const parseReal = val => parseFloat((val || '0').toString().replace(/[R$\s.]/g, '').replace(',', '.')) 
 	|| 0;
@@ -9786,7 +9786,7 @@ var Layout = function () {
 		const old_valor_pagar_num = normalizeToNumber(old_valor_pagar_text);
 		// ----------------------------------------------------------------------
 
-		if (pagamentosAVista == 1 && parseInt(avista, 10) == 1) {
+		if (todosPagamentosAVista() && parseInt(avista, 10) == 1) {
 			atualizarValoresPDV(1);
 		} else {
 			atualizarValoresPDV(0);
@@ -9923,10 +9923,19 @@ var Layout = function () {
 			return false;
 		}
 
-		// se quiser que os valores do PDV sejam recalculados após adicionar pagamento, chame:
-		atualizarValoresPDV($('.pagamento_avista').length ? parseInt($('.pagamento_avista').first().val() || 0,10) : 0);
-
 	} 
+
+	function todosPagamentosAVista() {
+		let todosAVista = true;
+		$('.pagamento_avista').each(function (_, item) {
+			let p = parseInt($(item).val(), 10);
+			if (isNaN(p) || p !== 1) {
+				todosAVista = false;
+				return false; // break
+			}
+		});
+		return todosAVista;
+	}
 
 	$('.modal_adicionar_pagamento').click(function (event) {
 
