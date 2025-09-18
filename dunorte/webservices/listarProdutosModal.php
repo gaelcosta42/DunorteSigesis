@@ -39,7 +39,7 @@
         $whereNome .= ')';
 
         $sql = " SELECT p.id, p.nome, p.codigo_interno, p.codigo, p.codigobarras, p.valor_avista, pt.id_tabela as id_tabela, 
-        pt.valor_venda, p.estoque, p.unidade, p.descricao_unidade, gr.idcor as cor_hex
+        pt.valor_venda, p.estoque, p.unidade, p.descricao_unidade, gr.idcor as cor_hex, p.comprimento, p.largura
         FROM produto as p
         LEFT JOIN produto_tabela as pt on pt.id_produto = p.id
         LEFT JOIN tabela_precos as tp on tp.id = pt.id_tabela

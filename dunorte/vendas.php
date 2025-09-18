@@ -5086,6 +5086,8 @@ if (!$usuario->is_Todos())
 															<th width="30px"><?php echo lang('UNIDADE'); ?></th>
 															<th width="50px"><?php echo lang('ESTOQUE'); ?></th>
 															<th width="50px"><?php echo lang('QUANTIDADE'); ?></th>
+															<th width="30px"><?php echo lang('COMPRIMENTO'); ?></th>
+															<th width="30px"><?php echo lang('LARGURA'); ?></th>
 															<th width="70px"><?php echo lang('VALOR'); ?></th>
 															<th width="70px"><?php echo lang('TOTAL'); ?></th>
 															<th width="90px"><?php echo lang('ACOES'); ?></th>

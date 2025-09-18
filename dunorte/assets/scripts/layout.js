@@ -3662,8 +3662,12 @@ var Layout = function () {
 		if (isNaN(d)) {
 			d = 0;
 		}
-
-		var valor_pagar = soma + a - d;
+		var somaPagamentos = 0;
+		$('.valor_pago').each(function () {
+			const v = parseFloat($(this).val()) || 0;
+			somaPagamentos += v;
+		});
+		var valor_pagar = soma + a - d - somaPagamentos;
 		valor_pagar = valor_pagar.toFixed(2);
 		valor_pagar = valor_pagar.toString();
 		valor_pagar = valor_pagar.replace('.', ',');
@@ -5729,6 +5733,11 @@ var Layout = function () {
 		if (isNaN(d)) {
 			d = 0;
 		}
+		var somaPagamentos = 0;
+		$('.valor_pago').each(function () {
+			const v = parseFloat($(this).val()) || 0;
+			somaPagamentos += v;
+		});
 
 		var acrescimo = $("#valor_acrescimo_modal").val();
 		var a = acrescimo.replace('.', '');
@@ -5739,7 +5748,7 @@ var Layout = function () {
 			a = 0;
 		}
 
-		var valor_pagar = soma + a - d;
+		var valor_pagar = soma + a - d - somaPagamentos;
 
 		if (d > 0) {
 			$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
@@ -8901,7 +8910,6 @@ var Layout = function () {
 	///////////////////////
 	///	INICIO NOVO PDV	///
 	///////////////////////
-
 	//Campo de desconto dentro do modal pagamento
 	$('#valor_desconto_modal').keyup(function (event) {
 
@@ -9524,266 +9532,242 @@ var Layout = function () {
 		}
 	});
 
-	//Ao escolher um tipo de pagamento o produto troca
+	
+	//======================
+	//#region MÓDULO: PDV F4
+	//======================
+	const formatReal = val => 'R$ ' + parseFloat(val || 0).toFixed(2).replace('.', ',');
+	const parseReal = val => parseFloat((val || '0').toString().replace(/[R$\s.]/g, '').replace(',', '.')) 
+	|| 0;
+
 	function atualizarValoresPDV(atualizarAVista) {
+		// coleta produtos: preferencialmente lê as TRs já renderizadas (mantendo cor inline)
+		const produtos = [];
+		$('#tabela_produtos').find('tr').each(function () {
+			const $tr = $(this);
 
-		var aux = 0;
-		var quantidade_pdv = []; //array de quantidades de produtos no formato 9,999.999 (milhar com virgula e decimal com ponto)
-		$(".quant_venda").each(function () {
-			var qtde = $(".quant_venda")[aux].value;
-			qtde = qtde.replace(',', '');
-			quantidade_pdv.push(qtde);
-			aux++;
-		});
+			// evita capturar TRs vazias/templatizadas
+			// extrai valores de onde estiverem (hidden inputs preferenciais)
+			const id = $tr.find('input.id_produto').val() || $tr.find('input[name="id_produto[]"]').val() || '';
+			const nome = ($tr.find('input.nome_produto_pdv').val() || $tr.find('span.font-md').first().text() || '').toString().trim();
+			const estoque = ($tr.find('input.estoque_produto_pdv').val() || $tr.find('input.estoque').val() || $tr.find('td').eq(2).text()).toString().trim();
+			const quantidade = $tr.find('.quant_venda').val() || '1.000';
 
-		aux = 0;
-		var id_produto = []; //array de id de produtos no formato 123
-		$(".id_produto").each(function () {
-			id_produto.push($(".id_produto")[aux].value);
-			aux++;
-		});
-
-		aux = 0;
-		var tabelas = []; //array de id de tabelas de preco no formato 123
-		$(".tabelas").each(function () {
-			tabelas.push($(".tabelas")[aux].value);
-			aux++;
-		});
-
-		aux = 0;
-		var valor_produto = []; //array de valores de produtos no formato R$ 10,00
-		var valor_avista = []; //array de valores de produtos à vista no formato 10.00
-		var valor_normal = []; //array de valores de produtos normal no formato 10.00
-		$(".valor").each(function () {
-			valor_produto.push($(".valor")[aux].value);
-			valor_avista.push($(".valor")[aux].getAttribute("valor_avista"));
-			valor_normal.push($(".valor")[aux].getAttribute("valor_normal"));
-			aux++;
-		});
-
-		aux = 0;
-		var estoque_produto = [];
-		$(".estoque_produto_pdv").each(function () {
-			estoque_produto.push($(".estoque_produto_pdv")[aux].value);
-			aux++;
-		});
-
-		aux = 0;
-		var nome_produto = [];
-		$(".nome_produto_pdv").each(function () {
-			nome_produto.push($(".nome_produto_pdv")[aux].value);
-			aux++;
-		});
-
-		aux = 0;
-		var cor_produto = []; // array de cores (hex)
-		$(".cor_produto_pdv").each(function () {
-			cor_produto.push($(".cor_produto_pdv")[aux].value);
-			aux++;
-		});
-
-		$("#tabela_produtos").empty();
-
-		for (var indice_produto = 0; indice_produto < id_produto.length; indice_produto++) {
-
-			var id_produto_atualizar = id_produto[indice_produto];
-			var id_tabela_atualizar = tabelas[indice_produto];
-			var quantidade_atualizar = parseFloat(quantidade_pdv[indice_produto]);
-			var valor_lista_atual = valor_produto[indice_produto];
-			valor_lista_atual = valor_lista_atual.replace('R$ ', '');
-			valor_lista_atual = valor_lista_atual.replace('.', '');
-			valor_lista_atual = valor_lista_atual.replace(',', '.');
-			valor_lista_atual = parseFloat(valor_lista_atual);
-			var valor_venda_avista = parseFloat(valor_avista[indice_produto]);
-			var valor_venda_normal = parseFloat(valor_normal[indice_produto]);
-
-			var valor_pagar_produto = 0;
-			if ((valor_lista_atual != parseFloat(valor_avista[indice_produto])) && (valor_lista_atual != parseFloat(valor_normal[indice_produto]))) {
-				valor_pagar_produto = valor_lista_atual;
-			} else if ((atualizarAVista == 1) && (parseFloat(valor_avista[indice_produto]) > 0)) {
-				valor_pagar_produto = parseFloat(valor_avista[indice_produto]);
-			} else {
-				valor_pagar_produto = parseFloat(valor_normal[indice_produto]);
+			// os inputs de valor podem ter classes diferentes; usamos qualquer um
+			const $inputValor = $tr.find('input.input-valor-normal, input.valor').first();
+			const valor_avista = parseFloat($inputValor.attr('valor_avista')) || 0;
+			const valor_normal = parseFloat($inputValor.attr('valor_normal')) || 0;
+			// encontra 'valor_lista' se o campo visível tem "R$ 0,91" etc
+			const valor_lista_text = $inputValor.val() || '';
+			const valor_lista = parseReal(valor_lista_text);
+			const comprimento = ($tr.find('input.comprimento_produto').val() || '0').toString().trim();
+        	const largura = ($tr.find('input.largura_produto').val() || '0').toString().trim();
+			// tabela: tentar o hidden .tabelas, senão fallback para control de página
+			let tabela = $tr.find('input.tabelas').val();
+			if (!tabela || tabela === 'undefined') {
+				tabela = $('#id_tabela_venda').val() || 0;
 			}
 
-			var idProduto = id_produto_atualizar;
-			var nomeProd = nome_produto[indice_produto];
-			var valorProd = valor_pagar_produto;
-			var estoqueProd = estoque_produto[indice_produto];
-			var quantidade = parseFloat(quantidade_atualizar);
-			var cor_hex = cor_produto[indice_produto];
+			// cor: preferir data-cor no input; se não houver, ler background-color do TR (inline)
+			let cor = $inputValor.attr('data-cor') || $tr.data('cor') || $tr.css('background-color') || '#ffffff';
 
+			produtos.push({
+				id,
+				nome,
+				estoque,
+				quantidade,
+				valor_lista,
+				valor_avista,
+				valor_normal,
+				tabela,
+				cor,
+				comprimento,
+            	largura
+			});
+		});
 
-			var total = valorProd * quantidade;
+		// Se não existiam TRs (p. ex. primeiro carregamento), faz fallback para coletores originais
+		if (produtos.length === 0) {
+			// --- fallback: varrer os arrays como no código original ---
+			const quantArr = Array.from($('.quant_venda')).map(el => $(el).val() || '0');
+			const idArr = Array.from($('.id_produto')).map(el => $(el).val() || '');
+			const tabelaArr = Array.from($('.tabelas')).map(el => $(el).val() || $('#id_tabela_venda').val() || 0);
+			const valorInputs = Array.from($('.valor')).map(el => $(el).val() || '');
+			const valorAvistaArr = Array.from($('.valor')).map(el => $(el).attr('valor_avista') || 0);
+			const valorNormalArr = Array.from($('.valor')).map(el => $(el).attr('valor_normal') || 0);
+			const estoqueArr = Array.from($('.estoque_produto_pdv')).map(el => $(el).val() || 0);
+			const nomeArr = Array.from($('.nome_produto_pdv')).map(el => $(el).val() || '');
+			const comprimentoArr = Array.from($('.comprimento_produto')).map(el => $(el).val() || 1);
+        	const larguraArr = Array.from($('.largura_produto')).map(el => $(el).val() || 1);
+			for (let i = 0; i < idArr.length; i++) {
+				produtos.push({
+					id: idArr[i] || '',
+					nome: nomeArr[i] || '',
+					estoque: estoqueArr[i] || 0,
+					quantidade: quantArr[i] || '1.000',
+					comprimento: comprimentoArr[i] || 1,
+                	largura: larguraArr[i] || 1,
+					valor_lista: parseReal(valorInputs[i]),
+					valor_avista: parseFloat(valorAvistaArr[i]) || 0,
+					valor_normal: parseFloat(valorNormalArr[i]) || 0,
+					tabela: tabelaArr[i] || $('#id_tabela_venda').val() || 0,
+					cor: '#ffffff'
+				});
+			}
+		}
 
-			quantidade = quantidade.toFixed(3);
-			var valor_total = total.toFixed(2);
-			total = valor_total;
-			valor_total = valor_total.toString();
-			valor_total = 'R$ ' + valor_total.replace('.', ',');
+		// limpa tabela e re-renderiza com as informações coletadas (preservando cor)
+		$('#tabela_produtos').empty();
 
-			let modalActive = $('#modal_alterar_valor_produto_venda').val() == 1 ? 1 : 0;
+		produtos.forEach(prod => {
+			// lógica idêntica à original para escolher preço
+			let valorListaAtual = prod.valor_lista || 0;
+			let valor_venda_avista = parseFloat(prod.valor_avista) || 0;
+			let valor_venda_normal = parseFloat(prod.valor_normal) || 0;
+			let comprimento = parseFloat(prod.comprimento) || 1;
+			let largura = parseFloat(prod.largura) || 1;
+			let valor_pagar_produto = 0;
+			if ((valorListaAtual !== valor_venda_avista) && (valorListaAtual !== valor_venda_normal) && valorListaAtual > 0) {
+				valor_pagar_produto = valorListaAtual;
+			} else if ((atualizarAVista == 1) && (valor_venda_avista > 0)) {
+				valor_pagar_produto = valor_venda_avista;
+			} else {
+				valor_pagar_produto = valor_venda_normal;
+			}
 
-			var table = $('#tabela_produtos');
-			table.prepend(
-				`<tr style="border-collapse: collapse; background-color:${cor_hex};">
-					<td><span class="font-md">${nomeProd}</span></td>
+			// garantir número correto
+			let quantidadeNum = parseFloat((prod.quantidade || '1').toString().replace(',', '.')) || 0;
+			// formatar para 3 casas
+			let quantidadeFmt = quantidadeNum.toFixed(3);
+
+			let total = (valor_pagar_produto * quantidadeNum * comprimento * largura) || 0;
+			let totalStr = total.toFixed(2);
+			let valor_total_text = 'R$ ' + totalStr.replace('.', ',');
+
+			// garantir que tabela não fique undefined
+			let tabelaVal = (typeof prod.tabela !== 'undefined' && prod.tabela !== 'undefined') ? prod.tabela : ($('#id_tabela_venda').val() || 0);
+
+			const trHtml = `
+				<tr class="cor_produto" style="border-collapse: collapse; background-color: ${prod.cor || '#ffffff'};">
+					<td><span class="font-md">${prod.nome}</span></td>
 					<td><span class="font-md"></span></td>
-					<td><span class="font-md">${estoqueProd}</span></td>
+					<td><span class="font-md">${prod.estoque}</span></td>
 					<td>
 						<span class="bold theme-font">
-							<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidade}" id="quantidade_produto">
+							<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidadeFmt}">
 						</span>
 					</td>
 					<td>
 						<span class="bold theme-font">
-							<input type="text" class="form-control form-filter input-sm moeda valor" name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" value="${floatParaReal(valorProd)}" id="vlr_venda_produto" style="width: 90px">
+							<input type="text" class="form-control form-filter input-sm comprimento_produto decimal" name="comprimento[]" value="${comprimento}">
 						</span>
 					</td>
-					<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
 					<td>
-						<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" title="Alterar valor deste produto?" style="background-color: #EECB00; color: #675800">
-							<i class="fa fa-dollar"></i>
-						</a>
-						<a href="javascript:void(0);" class="btn red remover_produto_venda" title="Deseja remover este produto?">
+						<span class="bold theme-font">
+							<input type="text" class="form-control form-filter input-sm largura_produto decimal" name="largura[]" value="${largura}">
+						</span>
+					</td>
+					<td>
+						<span class="bold theme-font">
+							<input type="text" class="form-control form-filter input-sm moeda valor input-valor-normal"
+							name="valor_venda_tabela[]"
+							valor_avista="${valor_venda_avista}"
+							valor_normal="${valor_venda_normal}"
+							value="${formatReal(valor_pagar_produto)}"
+							data-cor="${prod.cor || ''}"
+							style="width: 90px">
+						</span>
+					</td>
+					<td><span class="bold theme-font font-md valor_total">${valor_total_text}</span></td>
+					<td>
+						<a href="javascript:void(0);" class="btn red remover_produto_venda">
 							<i class="fa fa-times"></i>
 						</a>
 					</td>
-					<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="`+ nomeProd + `" />
-					<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
-					<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `" />
-					<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela_atualizar + `" />
-					<input type="hidden" class="cor_produto_pdv" value="${cor_hex}" />
-					<input type="hidden" class="total" value="`+ total + `" />
-					<input type="hidden" class="estoque" value="`+ estoqueProd + `" />
-				</tr>`
-			);
+					<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="${prod.nome}" />
+					<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="${prod.estoque}" />
+					<input name="id_produto[]" type="hidden" class="id_produto" value="${prod.id}" />
+					<input name="tabelas[]" type="hidden" class="tabelas" value="${tabelaVal}" />
+					<input type="hidden" class="total" value="${totalStr}" />
+					<input type="hidden" class="estoque" value="${prod.estoque}" />
+				</tr>
+			`;
+			$('#tabela_produtos').prepend(trHtml);
+		});
 
-			const styles = {
-				"pointer-events": "none",
-				"background-color": "#eaeaea"
-			}
+		// reaplica máscaras e handlers
+		$('.quant_venda').maskMoney({ decimal: '.', precision: 3, symbolStay: false, allowNegative: false });
+		$('.input-valor-normal, .valor').maskMoney({ symbol: 'R$ ', thousands: '.', decimal: ',', precision: 2, symbolStay: true, allowNegative: true });
 
-			if (modalActive === 1) {
-				$('#vlr_venda_produto').css(styles);
-			}
+		// recalcula totais (mantendo lógica original)
+		let soma = 0;
+		$('.total').each(function (indice, item) {
+			let i = $(item).val();
+			let v = parseFloat(i);
+			if (!isNaN(v)) soma += parseFloat(v.toFixed(2));
+		});
+		soma = parseFloat(soma.toFixed(2));
 
-			if (modalActive === 0) $('.btn_alterar_valor_produto_venda').addClass('hidden');
+		$("#valor").val(soma.toFixed(2));
+		$("#valor2").text(formatReal(soma));
+		$('#valor_total_modal').val(formatReal(soma));
 
-			$('.quant_venda').maskMoney({ decimal: '.', precision: 3, symbolStay: false, allowNegative: false });
-			$('#vlr_venda_produto').maskMoney({ symbol: 'R$ ', thousands: '.', decimal: ',', precision: 2, symbolStay: true, allowNegative: true });
+		// desconto
+		let desconto = parseReal($('#valor_desconto_modal').val());
+		if (isNaN(desconto)) desconto = 0;
+		// acrescimo
+		let acrescimo = parseReal($('#valor_acrescimo_modal').val());
+		if (isNaN(acrescimo)) acrescimo = 0;
 
-			$('.todos_produtos').focus();
+		let valor_pagar = soma + acrescimo - desconto;
+		if (valor_pagar < 0) valor_pagar = 0;
+		$("#valor_pagar").text(formatReal(valor_pagar));
+		$('.valor_pago_venda, #valor_pago_modal, #valor_pagar_modal_pgto, #show_valor_pagar_modal').val(valor_pagar.toFixed(2));
 
-			var soma = 0;
-			$('.total').each(function (indice, item) {
-				var i = $(item).val();
-				var v = parseFloat(i);
-				vlr = v.toFixed(2);
-				if (!isNaN(v)) {
-					soma += parseFloat(vlr);
-				}
-			});
-			soma = soma.toFixed(2);
+		// recalcula troco com base em pagamentos em dinheiro
+		let soma_dinheiro = 0;
+		$('.dinheiro').each(function (_, item) {
+			const p = parseFloat($(item).val());
+			if (!isNaN(p)) soma_dinheiro += p;
+		});
 
-			$("#valor").val(soma);
-			var resultado = soma.toString();
-			resultado = 'R$ ' + resultado.replace('.', ',');
-			$("#valor2").text(resultado);
-			$('#valor_total_modal').val(resultado);
+		let somaPagamentos = 0;
+		$('.valor_pago').each(function (_, item) {
+			const p = parseFloat($(item).val());
+			if (!isNaN(p)) somaPagamentos += p;
+		});
 
-			var desconto = $('#valor_desconto_modal').val();
-			var d = desconto.replace('.', '');
-			d = d.replace(',', '.');
-			d = d.replace('R$ ', '');
-			d = parseFloat(d);
-			if (isNaN(d)) {
-				d = 0;
-			}
+		// valor a pagar final considerando pagamentos (mesma lógica do original para não quebrar)
+		let valor_pagar_final = parseFloat($("#valor").val() || 0) + acrescimo - desconto - somaPagamentos;
+		if (isNaN(valor_pagar_final) || valor_pagar_final < 0) valor_pagar_final = 0;
+		$("#valor_pagar").text(formatReal(valor_pagar_final));
+		$('.valor_pago_venda, #valor_pago_modal, #valor_pagar_modal_pgto, #show_valor_pagar_modal').val(valor_pagar_final.toFixed(2));
 
-			if (d > 0) {
-				$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
-			}
+		// troco: diferença entre dinheiro recebido e que deveria ser pago em dinheiro
+		let soma_restante = somaPagamentos - soma_dinheiro;
+		let total_pagar_dinheiro = parseFloat($("#valor").val() || 0) + acrescimo - desconto - (somaPagamentos - soma_dinheiro);
+		if (isNaN(total_pagar_dinheiro) || total_pagar_dinheiro < 0) total_pagar_dinheiro = 0;
+		let troco = soma_dinheiro - total_pagar_dinheiro;
+		if (troco < 0) troco = 0;
+		$("#troco").text(formatReal(troco));
 
-			var acrescimo = $("#valor_acrescimo_modal").val();
-			var a = acrescimo.replace('.', '');
-			a = a.replace(',', '.');
-			a = a.replace('R$ ', '');
-			a = parseFloat(a);
-			if (isNaN(a)) {
-				a = 0;
-			}
-
-			var valor_pagar = soma + a - d;
-			valor_pagar = valor_pagar.toFixed(2);
-			valor_pagar = valor_pagar.toString();
-			valor_pagar = valor_pagar.replace('.', ',');
-			$('#valor_pagar').text('R$ ' + valor_pagar);
-
-			var valor = $("#valor").val();
-			var v = parseFloat(valor);
-			if (isNaN(v)) {
-				v = 0;
-			}
-
-			var desconto = $('#valor_desconto_modal').val();
-			var d = desconto.replace('.', '');
-			d = d.replace(',', '.');
-			d = d.replace('R$ ', '');
-			d = parseFloat(d);
-			if (isNaN(d)) {
-				d = 0;
-			}
-			var soma = 0;
-			$('.valor_pago').each(function (indice, item) {
-				var i = $(item).val();
-				var p = parseFloat(i);
-				if (!isNaN(p)) {
-					soma += p;
-				}
-			});
-			var soma_dinheiro = 0;
-			$('.dinheiro').each(function (indice, item) {
-				var i = $(item).val();
-				var p = parseFloat(i);
-				if (!isNaN(p)) {
-					soma_dinheiro += p;
-				}
-			});
-
-			var valor_pagar = v + a - d - soma;
-			if (valor_pagar < 0) {
-				valor_pagar = 0;
-			}
-			var resultado = valor_pagar.toFixed(2);
-			resultado = resultado.toString();
-			resultado = 'R$ ' + resultado.replace('.', ',');
-			$("#valor_pagar").text(resultado);
-			$('.valor_pago_venda').val(resultado);
-			$('#valor_pago_modal').val(resultado);
-			$('#valor_pagar_modal_pgto').val(resultado);
-			$('#show_valor_pagar_modal').val(resultado);
-
-			//coloca o foco no codigo de barras
-			$('.barcode').focus().select();
-
-		}
-
+		// foco no barcode (mantém comportamento original)
+		$('.barcode').focus().select();
 	}
 
-	//Ao clicar no botao "adicionar pagamento"
 	function processarPagamentoVendaPDV(valor_pago_digitado) {
-
-		var id_pagamento = $('#tipopagamento option:selected').val();
-		var pagamento = $('#tipopagamento option:selected').text().trim();
-		var id_categoria = $('#tipopagamento option:selected').attr('id_categoria');
-		var avista = $(' #tipopagamento option:selected').attr('avista');
-		var parcela = $('#parcelas_modal').val();
+		// le o tipo de pagamento selecionado
+		var $op = $('#tipopagamento option:selected');
+		var id_pagamento = $op.val();
+		var pagamento = $op.text().trim();
+		var id_categoria = $op.attr('id_categoria');
+		var avista = $op.attr('avista') || 0;
+		var parcela = $('#parcelas_modal').val() || '';
 		var pagamentosAVista = 1;
 
-		$('.pagamento_avista').each(function (indice, item) {
+		$('.pagamento_avista').each(function (_, item) {
 			var i = $(item).val();
-			var p = parseInt(i);
+			var p = parseInt(i, 10);
 			if (!isNaN(p)) {
 				pagamentosAVista *= p;
 			} else {
@@ -9791,11 +9775,20 @@ var Layout = function () {
 			}
 		});
 
-		if (pagamentosAVista == 1 && avista == 1) {
-			/* Atualizar os valores do PDV sobre os valores à vista */
+		// --- capturar valor antigo exibido em #valor_pagar (antes de recalcular) ---
+		const normalizeToNumber = txt => {
+			const s = (txt || '').toString();
+			const cleaned = s.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+			const n = parseFloat(cleaned);
+			return isNaN(n) ? 0 : n;
+		};
+		const old_valor_pagar_text = $("#valor_pagar").text() || '';
+		const old_valor_pagar_num = normalizeToNumber(old_valor_pagar_text);
+		// ----------------------------------------------------------------------
+
+		if (pagamentosAVista == 1 && parseInt(avista, 10) == 1) {
 			atualizarValoresPDV(1);
 		} else {
-			/* Atualizar os valores do PDV sobre os valores normais */
 			atualizarValoresPDV(0);
 		}
 
@@ -9804,151 +9797,137 @@ var Layout = function () {
 			campoData.show();
 		}
 
-		if (parcela === "" || parcelas === 0)
-			parcela = 1;
+		// valida parcela corretamente
+		if (parcela === "" || parseInt(parcela, 10) === 0) parcela = 1;
 
-		var valor = $("#valor2").text().replace('R$ ', '').replace('.', '').replace(',', '.');
-		var v = parseFloat(valor);
-		if (isNaN(v)) {
-			v = 0;
+		// recupera valor total atual (v) - campo #valor2 (mostrado)
+		var valorVisivel = $("#valor2").text().replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+		var v = parseFloat(valorVisivel);
+		if (isNaN(v)) v = 0;
+
+		// valor_pago_digitado pode ser string "R$ 10,00" ou ""
+		var valor_pago_text = (valor_pago_digitado || '').toString().trim();
+
+		// Se não digitou, pega valor a pagar
+		if (!valor_pago_text || valor_pago_text === '0' || valor_pago_text === '0,00' || normalizeToNumber(valor_pago_text) === old_valor_pagar_num) {
+			valor_pago_text = $("#valor_pagar").text() || '0,00';
 		}
 
-		var valor_pago = valor_pago_digitado;
-		if (valor_pago.replace('R$ ', '').replace('.', '').replace(',', '.') == 0 || valor_pago.replace('R$ ', '').replace('.', '').replace(',', '.') == "") {
-			valor_pago = $("#valor_pagar").text();
-		}
+		// Converte R$ "20,91" → float 20.91
+		var vp = parseFloat(valor_pago_text.replace(/[R$\s]/g, '').replace(',', '.'));
+		if (isNaN(vp)) vp = 0;
 
-		var vp = valor_pago_digitado;
-		vp = vp.replace('R$ ', '');
-		vp = vp.replace('.', '');
-		vp = vp.replace(',', '.');
-		vp = parseFloat(vp);
-		if (isNaN(vp)) {
-			vp = 0;
-		}
 
-		// var acrescimo = $("#valor_acrescimo_rapida").val();
-		var acrescimo = $('#valor_acrescimo_modal').val();
-		var a = acrescimo.replace('.', '');
-		a = a.replace(',', '.');
-		a = a.replace('R$ ', '');
-		a = parseFloat(a);
-		if (isNaN(a)) {
-			a = 0;
-		}
-		var valor_acrescimo = a.toFixed(2);
-		valor_acrescimo = 'R$ ' + valor_acrescimo.toString().replace('.', ',');
+		// acrescimo e desconto (parciais)
+		var a = parseReal($('#valor_acrescimo_modal').val());
+		if (isNaN(a)) a = 0;
+		var d = parseReal($('#valor_desconto_modal').val());
+		if (isNaN(d)) d = 0;
+
+		// atualiza visuais de acrescimo/desconto no PDV
+		var valor_acrescimo = 'R$ ' + parseFloat(a || 0).toFixed(2).toString().replace('.', ',');
 		$('#valor_acrescimo_pdv').text(valor_acrescimo);
-
-		var desconto = $("#valor_desconto_modal").val();
-		var d = desconto.replace('.', '');
-		d = d.replace(',', '.');
-		d = d.replace('R$ ', '');
-		d = parseFloat(d);
-		if (isNaN(d)) {
-			d = 0;
-		}
-		var valor_desconto = d.toFixed(2);
-		valor_desconto = 'R$ ' + valor_desconto.toString().replace('.', ',');
+		var valor_desconto = 'R$ ' + parseFloat(d || 0).toFixed(2).toString().replace('.', ',');
 		$('#valor_desconto_pdv').text(valor_desconto);
 
+		// se vp <= 0 e ainda existe valor a pagar, foca input
 		if (vp <= 0 && (v + a - d > 0)) {
 			$('#valor_pago_modal').focus().select();
 			return false;
 		}
 
 		var dinheiro = 0;
-		if (id_categoria == '1') {
+		if (id_categoria == '1' || parseInt(id_categoria, 10) === 1) {
 			dinheiro = vp;
 		}
 
 		var data_boleto = $('#data_boleto_modal').val();
-
 		if (!data_boleto) {
 			const agora = new Date();
 			let dia = agora.getDate();
-			let mes = ((agora.getMonth() + 1) > 9) ? agora.getMonth() + 1 : '0' + (agora.getMonth() + 1);
+			let mes = (agora.getMonth() + 1) > 9 ? (agora.getMonth() + 1) : '0' + (agora.getMonth() + 1);
 			let ano = agora.getFullYear();
 			data_boleto = dia + '/' + mes + '/' + ano;
 		}
+
+		// garante valor de tabela para cada produto (evita "undefined")
+		// (não é obrigatório aqui, mas deixa coerente se alguma rotina reler tabelas)
+		$('#tabela_produtos input.tabelas').each(function () {
+			if (!$(this).val() || $(this).val() === 'undefined') {
+				$(this).val($('#id_tabela_venda').val() || 0);
+			}
+		});
+
+		// insere linha de pagamento (formato apresentado = R$ 10,00) e os hidden corretos
+		var valorPagoFormatado = formatReal(vp);
+		var vpFixed = vp.toFixed(2);
 
 		var $el = $("#tabela_pagamentos");
 		$el.prepend(`
 			<tr>
 				<td><span class="font-md">${pagamento}</span></td>
 				<td><span class="font-md">${parcela}</span></td>
-				<td><span class="bold theme-font font-md">`+ valor_pago + `<span></td>
+				<td><span class="bold theme-font font-md">${valorPagoFormatado}</span></td>
 				<td><a href="javascript:void(0);" class="btn red remover_pagamento" title="Deseja remover este pagamento?"><i class="fa fa-times"></i></a></td>
-				<input type="hidden" name="id_pagamento[]" class="id_pagamento" value="${id_pagamento}" />
-				<input type="hidden" name="dinheiro[]" class="dinheiro" value="`+ dinheiro + `" />
-				<input type="hidden" name="parcela[]" class="parcela" value="${parcela}" />
-				<input type="hidden" name="valor_pago[]" class="valor_pago" value="`+ vp + `" />
-				<input type="hidden" name="pagamento_avista[]" class="pagamento_avista" value="`+ avista + `" />
-				<input type="hidden" name="data_boleto_separado[]" class="data_boleto_separado" value="`+ data_boleto + `" />
-			</tr>`
-		).find("tr").first().hide();
-		$el.find("tr").first().fadeIn();
 
-		var soma = 0; //soma dos valores de todos os pagamentos no formato 10.00
+				<input type="hidden" name="id_pagamento[]" class="id_pagamento" value="${id_pagamento}" />
+				<input type="hidden" name="dinheiro[]" class="dinheiro" value="${dinheiro}" />
+				<input type="hidden" name="parcela[]" class="parcela" value="${parcela}" />
+				<input type="hidden" name="valor_pago[]" class="valor_pago" value="${vpFixed}" />
+				<input type="hidden" name="pagamento_avista[]" class="pagamento_avista" value="${avista}" />
+				<input type="hidden" name="data_boleto_separado[]" class="data_boleto_separado" value="${data_boleto}" />
+			</tr>
+		`).find("tr").first().hide().fadeIn();
+
+		// somatório dos pagamentos
+		var soma = 0;
 		$('.valor_pago').each(function (indice, item) {
 			var i = $(item).val();
 			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma += p;
-			}
+			if (!isNaN(p)) soma += p;
 		});
 
-		var valor_pago_pdv = soma.toFixed(2); //formatação em moeda (R$ 10,00) dos valores pagos
-		valor_pago_pdv = 'R$ ' + valor_pago_pdv.toString().replace('.', ',');
+		var valor_pago_pdv = 'R$ ' + parseFloat(soma || 0).toFixed(2).replace('.', ',');
 		$('#valor_pago_pdv').text(valor_pago_pdv);
 
-		var soma_dinheiro = 0;  //soma dos valores de todos os pagamentos em dinheiro no formato 10.00
+		// soma dinheiro
+		var soma_dinheiro = 0;
 		$('.dinheiro').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma_dinheiro += p;
-			}
+			var i = parseFloat($(item).val());
+			if (!isNaN(i)) soma_dinheiro += i;
 		});
 
+		// recalcula valor a pagar (v + a - d - soma)
 		var valor_pagar = v + a - d - soma;
-		if (valor_pagar < 0) {
-			valor_pagar = 0;
-		}
-		var resultado = valor_pagar.toFixed(2);
-		resultado = 'R$ ' + resultado.replace('.', ',');
+		if (valor_pagar < 0) valor_pagar = 0;
+		var resultado = 'R$ ' + parseFloat(valor_pagar).toFixed(2).replace('.', ',');
 		$("#valor_pagar").text(resultado);
 
-		$('.valor_pago_venda').val(resultado);
-		$('#valor_pago_modal').val(resultado);
-		$('#valor_pagar_modal_pgto').val(resultado);
+		$('.valor_pago_venda').val(valor_pagar.toFixed(2));
+		$('#valor_pago_modal').val(valor_pagar.toFixed(2));
+		$('#valor_pagar_modal_pgto').val(valor_pagar.toFixed(2));
 
+		// troco
 		var soma_restante = soma - soma_dinheiro;
 		var total_pagar_dinheiro = v + a - d - soma_restante;
-		if (total_pagar_dinheiro < 0) {
-			total_pagar_dinheiro = 0;
-		}
+		if (total_pagar_dinheiro < 0) total_pagar_dinheiro = 0;
 		var troco = soma_dinheiro - total_pagar_dinheiro;
-		if (troco < 0) {
-			troco = 0;
-		}
-		resultado = troco.toFixed(2);
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#troco").text(resultado);
+		if (troco < 0) troco = 0;
+		var trocoFormatado = 'R$ ' + parseFloat(troco).toFixed(2).replace('.', ',');
+		$("#troco").text(trocoFormatado);
 
 		if (troco > soma_dinheiro) {
-			resultado = soma_dinheiro.toFixed(2);
-			resultado = 'R$ ' + resultado.replace('.', ',');
-			$("#troco").text(resultado);
+			var maxTroco = 'R$ ' + parseFloat(soma_dinheiro).toFixed(2).replace('.', ',');
+			$("#troco").text(maxTroco);
 			alert('O valor do TROCO deve ser MENOR que o total pago em DINHEIRO.');
 			return false;
 		}
 
-		//return false;
+		// se quiser que os valores do PDV sejam recalculados após adicionar pagamento, chame:
+		atualizarValoresPDV($('.pagamento_avista').length ? parseInt($('.pagamento_avista').first().val() || 0,10) : 0);
 
-	}
+	} 
 
-	//Modal adicionar pagamento ao clicar
 	$('.modal_adicionar_pagamento').click(function (event) {
 
 		var id_produto = $('.id_produto').val();
@@ -9987,155 +9966,110 @@ var Layout = function () {
 		}
 	});
 
+	//#endregion 
 
-	//Valor de venda do produto - VENDAS > NOVA VENDA
-	$(document).on('keyup', '#vlr_venda_produto', function () {
+	/////////////////////////////////////
+	//#region edit: TABELA DE PRODUTOS//
+	////////////////////////////////////
 
-		var produto = $(this).parents("tr");
-		var valor = produto.find(".valor").val();
-		var quant_venda = produto.find(".quant_venda").val();
-		var val_pagar = $("#val_pagar").html();
-
-		v = realParaFloat(valor);
-		if (v < 0) {
+	// Calcular valor total do produto em cada row ao modificar valor, quantidade, comprimento ou largura
+	function recalcularLinha(produto) {
+		let valor = realParaFloat(produto.find(".valor").val());
+		let quantidade = parseFloat((produto.find(".quant_venda").val() || "1").replace(',', '.')) || 1;
+		let comprimento = parseFloat((produto.find(".comprimento_produto").val() || "1").replace(',', '.')) || 1;
+		let largura = parseFloat((produto.find(".largura_produto").val() || "1").replace(',', '.')) || 1;
+		
+		if (valor < 0) {
 			alert('Valor do produto NÃO PODE ser negativo.');
-			v = v * (-1);
-			produto.find(".valor").val(floatParaReal(v));
-		}
-		if (isNaN(v)) {
-			v = 0;
+			valor = Math.abs(valor);
+			produto.find(".valor").val(floatParaReal(valor));
 		}
 
-		quant_venda = quant_venda.replace(',', '');
-		q = parseFloat(quant_venda);
-		if (isNaN(q) || q == 0) {
+		if (quantidade <= 0 || isNaN(quantidade)) {
 			alert('Cuidado, a quantidade do produto não pode ser zerada.');
-			produto.find(".quant_venda").focus().select();
-			q = 0;
+			quantidade = 1;
+			produto.find(".quant_venda").val("1");
 		}
 
-		if (val_pagar < 0) {
-			val_pagar = 0;
-			alert("O valor a pagar não pode der negativo");
+		if (comprimento <= 0 || isNaN(comprimento)) {
+			alert('Cuidado, o comprimento do produto não pode ser zerado.');
+			comprimento = 1;
+			produto.find(".comprimento_produto").val("1");
 		}
 
-		var total = (v * q);
-		if (((total % 1) != 0) && (!isNaN(total % 1))) {
-			total.toString;
-			total += '0001';
+		if (largura <= 0 || isNaN(largura)) {
+			alert('Cuidado, a largura do produto não pode ser zerada.');
+			largura = 1;
+			produto.find(".largura_produto").val("1");
 		}
-		total = parseFloat(total);
-		valor_total = total.toFixed(2);
-		valor_total = valor_total.toString();
-		valor_total = valor_total.replace('.', ',');
-		produto.find(".valor_total").text('R$ ' + valor_total);
+
+		// cálculo do total da linha
+		let total = valor * quantidade * comprimento * largura;
+		total = parseFloat(total.toFixed(2));
+
+		produto.find(".valor_total").text('R$ ' + total.toFixed(2).replace('.', ','));
 		produto.find(".total").val(total);
 
-		var acrescimo = $("#valor_acrescimo_rapida").val();
-		var a = acrescimo.replace('.', '');
-		a = a.replace(',', '.');
-		a = a.replace('R$ ', '');
-		a = parseFloat(a);
-		if (isNaN(a)) {
-			a = 0;
-		}
+		// atualizar totais gerais
+		atualizarTotais();
+	}
 
-		var soma = 0;
-		$('.total').each(function (indice, item) {
-			var i = $(item).val();
-			var v = parseFloat(i);
-			vlr = v.toFixed(2);
-			if (!isNaN(v)) {
-				soma += parseFloat(vlr);
-			}
+	function atualizarTotais() {
+		let soma = 0;
+		$(".total").each(function () {
+			soma += parseFloat($(this).val()) || 0;
 		});
+
+		let acrescimo = parseFloat($("#valor_acrescimo_rapida").val().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+		let desconto = parseFloat($("#valor_desconto_modal").val().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 
 		soma = soma.toFixed(2);
 		$("#valor").val(soma);
-		var resultado = soma.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
+
+		let resultado = 'R$ ' + soma.replace('.', ',');
 		$("#valor2").text(resultado);
 		$('#valor_total_modal').val(resultado);
 
-		var desconto = $('#valor_desconto_modal').val();
-		var d = desconto.replace('.', '');
-		d = d.replace(',', '.');
-		d = d.replace('R$ ', '');
-		d = parseFloat(d);
-		if (isNaN(d)) {
-			d = 0;
-		}
+		let valor_pagar = (parseFloat(soma) + acrescimo - desconto).toFixed(2);
+		$('#valor_pagar').text('R$ ' + valor_pagar.replace('.', ','));
 
-		var valor_pagar = soma + a - d;
-		valor_pagar = valor_pagar.toFixed(2);
-		valor_pagar = valor_pagar.toString();
-		valor_pagar = valor_pagar.replace('.', ',');
-		$('#valor_pagar').text('R$ ' + valor_pagar);
-
-		var valor = $("#valor").val();
-		var v = parseFloat(valor);
-		if (isNaN(v)) {
-			v = 0;
-		}
-		var desconto = $("#valor_desconto_modal").val();
-		var d = desconto.replace('.', '');
-		d = d.replace(',', '.');
-		d = d.replace('R$ ', '');
-		d = parseFloat(d);
-		if (isNaN(d)) {
-			d = 0;
-		}
-
-		if (d > 0) {
-			$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
-		}
-
-		var soma = 0;
-		$('.valor_pago').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma += p;
-			}
-		});
-		var soma_dinheiro = 0;
-		$('.dinheiro').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma_dinheiro += p;
-			}
+		// pagamentos já feitos
+		let soma_pagamentos = 0;
+		$('.valor_pago').each(function () {
+			soma_pagamentos += parseFloat($(this).val()) || 0;
 		});
 
-		var valor_pagar = v + a - d - soma;
-		if (valor_pagar < 0) {
-			valor_pagar = 0;
-		}
-		var resultado = valor_pagar.toFixed(2);
-		resultado = resultado.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#valor_pagar").text(resultado);
-		$('#valor_pago_modal').val(resultado);
-		$('#valor_pagar_modal_pgto').val(resultado);
+		let soma_dinheiro = 0;
+		$('.dinheiro').each(function () {
+			soma_dinheiro += parseFloat($(this).val()) || 0;
+		});
 
-		var soma_restante = soma - soma_dinheiro;
-		var total_pagar_dinheiro = v + a - d - soma_restante;
-		var troco = soma_dinheiro - total_pagar_dinheiro;
-		if (troco < 0) {
-			troco = 0;
-		}
-		resultado = troco.toFixed(2);
-		resultado = resultado.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#troco").text(resultado);
+		let restante = parseFloat(valor_pagar) - soma_pagamentos;
+		if (restante < 0) restante = 0;
+
+		$('#valor_pago_modal').val('R$ ' + restante.toFixed(2).replace('.', ','));
+		$('#valor_pagar_modal_pgto').val('R$ ' + restante.toFixed(2).replace('.', ','));
+
+		// calcular troco
+		let soma_restante = soma_pagamentos - soma_dinheiro;
+		let total_pagar_dinheiro = parseFloat(valor_pagar) - soma_restante;
+		let troco = soma_dinheiro - total_pagar_dinheiro;
+		if (troco < 0) troco = 0;
+
+		$("#troco").text('R$ ' + troco.toFixed(2).replace('.', ','));
+	}
+
+	// Eventos unificados para inputs de cada linha
+	$(document).on('keyup change', '.valor, .quant_venda, .comprimento_produto, .largura_produto', function () {
+		let produto = $(this).closest("tr");
+		recalcularLinha(produto);
 	});
 
 	$('#modal_produtos').on('shown.bs.modal', function () {
 		$('#qtde_produto').maskMoney({ precision: 3, symbolStay: false, allowNegative: false });
-		$('#qtde_produto').val('1.000')
+		$('#qtde_produto').val('1.000');
 		$('#nome_produto').focus().select();
 	});
-
 
 	$(document).on('keyup', '#qtde_produto', function (e) {
 		if (e.which == 13 || e.keyCode == 13) {
@@ -10143,9 +10077,12 @@ var Layout = function () {
 		}
 	});
 
-	//======================
-	//#region MÓDULO: PDV F1
-	//======================
+	//#endregion
+
+	///////////////////////////
+	//#region MÓDULO: PDV F1//
+	/////////////////////////
+
 	function modalProdutosComF1(valor = 0) {
 
 		$('#modal_produtos').modal();
@@ -10209,7 +10146,9 @@ var Layout = function () {
 						var codigo = data[i].codigo;
 						var codigo_interno = data[i].codigo_interno;
 						var unidade = data[i].unidade;
-						var cor_hex = data[i].cor_hex; // ← vem do banco (grupo)
+						var cor_hex = data[i].cor_hex;
+						var comprimento = data[i].comprimento;
+						var largura = data[i].largura;
 
 						let info_produto = unidade
 							? `${codigo} - ${nome} (${unidade} - ${valor_exibir}${valor}) ${codigo_interno}`
@@ -10220,6 +10159,8 @@ var Layout = function () {
 									estoqueProd="${estoque}" 
 									valor_avista="${valor_avista}" 
 									valorProd="${valor}" 
+									comprimento="${comprimento}"
+									largura="${largura}"
 									unidade="${unidade}" 
 									data-cor="${cor_hex}" 
 									style="background-color:${cor_hex}; color:#000;">`;
@@ -10243,8 +10184,10 @@ var Layout = function () {
 
 						var idProduto = parseFloat($('.selectProd option:selected').val());
 						var nomeProd = $('.selectProd option:selected').text();
+						var comprimento = parseFloat($('.selectProd option:selected').attr('comprimento')) || 1;
+						var largura = parseFloat($('.selectProd option:selected').attr('largura')) || 1;
+						console.log('Comprimento:', comprimento, 'Largura:', largura);
 						var corHex = $('.selectProd option:selected').attr('data-cor');
-						console.log("Cor do produto:", corHex);
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
 						var valor_avista = parseFloat($('.selectProd option:selected').attr('valor_avista'));
@@ -10262,7 +10205,7 @@ var Layout = function () {
 
 						valor_venda_avista = valor_avista.toFixed(2);
 						valor_venda_normal = valorProd.toFixed(2);
-
+						
 						if (controle_avista == 1 && controle_pagamentos == 1)
 							pagamentoAVista = true;
 
@@ -10278,7 +10221,7 @@ var Layout = function () {
 						}
 						var quantidade = q.toFixed(3);
 
-						var total = valorProd * quantidade;
+						var total = valorProd * quantidade * comprimento * largura;
 						var valor_total = total.toFixed(2);
 
 						total = valor_total;
@@ -10302,31 +10245,45 @@ var Layout = function () {
 									<td><span class="font-md">${estoqueProd}</span></td>
 									<td>
 										<span class="bold theme-font">
-											<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidade}" id="quantidade_produto">
+										<input type="text" class="form-control form-filter input-sm quant_venda decimal quantidade_produto" 
+												name="quantidade[]" value="${quantidade}">
 										</span>
 									</td>
 									<td>
 										<span class="bold theme-font">
-											<input type="text" class="form-control form-filter input-sm moeda valor" name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" value="${floatParaReal(valorProd)}" id="vlr_venda_produto" style="width: 90px">
+										<input type="text" class="form-control form-filter input-sm comprimento decimal comprimento_produto" 
+												name="comprimento[]" value="${comprimento}">
 										</span>
 									</td>
-									<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
 									<td>
-										<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" title="Alterar valor deste produto?" style="background-color: #EECB00; color: #675800">
-											<i class="fa fa-dollar"></i>
-										</a>
-										<a href="javascript:void(0);" class="btn red remover_produto_venda" title="Deseja remover este produto?">
-											<i class="fa fa-times"></i>
-										</a>
+										<span class="bold theme-font">
+										<input type="text" class="form-control form-filter input-sm largura decimal largura_produto" 
+												name="largura[]" value="${largura}">
+										</span>
 									</td>
-									<input name="nome_produto_pdv[]" type="hidden" class="nome_produto_pdv" value="`+ nomeProd + `" />
-									<input name="estoque_produto_pdv[]" type="hidden" class="estoque_produto_pdv" value="`+ estoqueProd + `" />
-									<input name="id_produto[]" type="hidden" class="id_produto" value="`+ idProduto + `" />
-									<input name="cor_produto_pdv[]" type="hidden" class="cor_produto_pdv" value="` + cor_hex + `" />
-									<input type="hidden" class="total" value="`+ total + `" />
-									<input type="hidden" class="estoque" value="`+ estoqueProd + `" />
-									<input name="tabelas[]" type="hidden" class="tabelas" value="`+ id_tabela + `" />
-								</tr>`
+									<td>
+										<span class="bold theme-font">
+										<input type="text" class="form-control form-filter input-sm moeda valor vlr_venda_produto" 
+												name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" 
+												value="${floatParaReal(valorProd)}" style="width: 90px">
+										</span>
+									</td>
+									<td><span class="bold theme-font font-md valor_total">${valor_total}</span></td>
+									<td>
+										<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" ...><i class="fa fa-dollar"></i></a>
+										<a href="javascript:void(0);" class="btn red remover_produto_venda" ...><i class="fa fa-times"></i></a>
+									</td>
+
+									<!-- Hidden fields -->
+									<input type="hidden" name="nome_produto_pdv[]" class="nome_produto_pdv" value="${nomeProd}" />
+									<input type="hidden" name="estoque_produto_pdv[]" class="estoque_produto_pdv" value="${estoqueProd}" />
+									<input type="hidden" name="id_produto[]" class="id_produto" value="${idProduto}" />
+									<input type="hidden" name="cor_produto_pdv[]" class="cor_produto_pdv" value="${corHex}" />
+									<input type="hidden" class="total" value="${total}" />
+									<input type="hidden" class="estoque" value="${estoqueProd}" />
+									<input type="hidden" name="tabelas[]" class="tabelas" value="${id_tabela}" />
+									</tr>
+									`
 							).find("tr").first().hide();
 
 							if (modalActive === 0) $('.btn_alterar_valor_produto_venda').addClass('hidden');
@@ -10377,7 +10334,13 @@ var Layout = function () {
 								a = 0;
 							}
 
-							var valor_pagar = soma + a - d;
+							var somaPagamentos = 0;
+							$('.valor_pago').each(function () {
+								const v = parseFloat($(this).val()) || 0;
+								somaPagamentos += v;
+							});
+
+							var valor_pagar = soma + a - d - somaPagamentos;
 							valor_pagar = valor_pagar.toFixed(2);
 							valor_pagar = valor_pagar.toString();
 							valor_pagar = valor_pagar.replace('.', ',');
@@ -10446,7 +10409,9 @@ var Layout = function () {
 						var idProduto = parseFloat($('.selectProd option:selected').val());
 
 						if (isNaN(idProduto)) idProduto = 0;
-
+						var comprimento = parseFloat($('.selectProd option:selected').attr('comprimento')) || 1;
+						var largura = parseFloat($('.selectProd option:selected').attr('largura')) || 1;
+						console.log('Comprimento:', comprimento, 'Largura:', largura);
 						var nomeProd = $('.selectProd option:selected').text();
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
@@ -10482,7 +10447,7 @@ var Layout = function () {
 						}
 						var quantidade = q.toFixed(3);
 
-						var total = valorProd * quantidade;
+						var total = valorProd * quantidade * comprimento * largura;
 						var valor_total = total.toFixed(2);
 
 						total = valor_total;
@@ -10501,6 +10466,16 @@ var Layout = function () {
 									<td>
 										<span class="bold theme-font">
 										<input type="text" class="form-control form-filter input-sm quant_venda decimal" name="quantidade[]" value="${quantidade}" id="quantidade_produto"></span>
+									</td>
+									<td>
+										<span class="bold theme-font">
+											<input type="text" class="form-control form-filter input-sm comprimento decimal comprimento_produto" name="comprimento[]" value="${comprimento}">
+										</span>
+									</td>
+									<td>
+										<span class="bold theme-font">
+											<input type="text" class="form-control form-filter input-sm largura decimal largura_produto" name="largura[]" value="${largura}">
+										</span>
 									</td>
 									<td>
 										<span class="bold theme-font">
@@ -10586,7 +10561,14 @@ var Layout = function () {
 							a = 0;
 						}
 
-						var valor_pagar = soma + a - d;
+						var somaPagamentos = 0;
+						$('.valor_pago').each(function () {
+							const v = parseFloat($(this).val()) || 0;
+							somaPagamentos += v;
+						});
+						console.log('Soma pagamentos: ', somaPagamentos);
+
+						var valor_pagar = soma + a - d - somaPagamentos;
 						valor_pagar = valor_pagar.toFixed(2);
 						valor_pagar = valor_pagar.toString();
 						valor_pagar = valor_pagar.replace('.', ',');
@@ -10664,6 +10646,7 @@ var Layout = function () {
 	$('.modal_adicionar_produto').click(function () {
 		modalProdutosComF1();
 	});
+
 
 	//#endregion MÓDULO: PDV F1
 
