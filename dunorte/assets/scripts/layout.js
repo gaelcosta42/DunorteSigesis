@@ -10039,21 +10039,22 @@ var Layout = function () {
 		$("#valor2").text(resultado);
 		$('#valor_total_modal').val(resultado);
 
-		let valor_pagar = (parseFloat(soma) + acrescimo - desconto).toFixed(2);
-		$('#valor_pagar').text('R$ ' + valor_pagar.replace('.', ','));
-
 		// pagamentos já feitos
 		let soma_pagamentos = 0;
 		$('.valor_pago').each(function () {
 			soma_pagamentos += parseFloat($(this).val()) || 0;
 		});
+		console.log('Soma pagamentos: ' + soma_pagamentos);
+
+		let valor_pagar = (parseFloat(soma) + acrescimo - desconto - soma_pagamentos).toFixed(2);
+		$('#valor_pagar').text('R$ ' + valor_pagar.replace('.', ','));
 
 		let soma_dinheiro = 0;
 		$('.dinheiro').each(function () {
 			soma_dinheiro += parseFloat($(this).val()) || 0;
 		});
 
-		let restante = parseFloat(valor_pagar) - soma_pagamentos;
+		let restante = parseFloat(valor_pagar);
 		if (restante < 0) restante = 0;
 
 		$('#valor_pago_modal').val('R$ ' + restante.toFixed(2).replace('.', ','));
