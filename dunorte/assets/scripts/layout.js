@@ -9336,6 +9336,23 @@ var Layout = function () {
 			quantidade_pdv.push(qtde.replace(',', ''));
 			aux++;
 		});
+
+		aux = 0;
+		var comprimento_pdv = [];
+		$(".comprimento_produto").each(function () {
+			var comp = $(".comprimento_produto")[aux].value || "1";
+			comprimento_pdv.push(comp.replace(',', '.'));
+			aux++;
+		});
+
+		aux = 0;
+		var largura_pdv = [];
+		$(".largura_produto").each(function () {
+			var larg = $(".largura_produto")[aux].value || "1";
+			largura_pdv.push(larg.replace(',', '.'));
+			aux++;
+		});
+
 		aux = 0;
 		var valor_produto = []; //array de valores de produtos no formato R$ 10,00
 		var valor_produto_avista = []; //array de valores avista de produtos no formato 10.00
@@ -9354,16 +9371,19 @@ var Layout = function () {
 				var valor_lista_atual = valor_produto[i];
 				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
 				valor_lista_atual = parseFloat(valor_lista_atual);
+
+				var fator = parseFloat(quantidade_pdv[i]) *
+							parseFloat(comprimento_pdv[i] || 1) *
+							parseFloat(largura_pdv[i] || 1);
+
 				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
-					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * parseFloat(quantidade_pdv[i]));
-					soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
 				} else if (valor_produto_avista[i] > 0) {
-					soma_valor_total += (parseFloat(valor_produto_avista[i]).toFixed(2) * parseFloat(quantidade_pdv[i]));
-					soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+					soma_valor_total += (parseFloat(valor_produto_avista[i]).toFixed(2) * fator);
 				} else {
-					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * parseFloat(quantidade_pdv[i]));
-					soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
 				}
+				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
 			}
 		} else {
 			for (i = 0; i < quantidade_pdv.length; i++) {
@@ -9371,13 +9391,16 @@ var Layout = function () {
 				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
 				valor_lista_atual = parseFloat(valor_lista_atual);
 
+				var fator = parseFloat(quantidade_pdv[i]) *
+							parseFloat(comprimento_pdv[i] || 1) *
+							parseFloat(largura_pdv[i] || 1);
+
 				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
-					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * parseFloat(quantidade_pdv[i]));
-					soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
 				} else {
-					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * parseFloat(quantidade_pdv[i]));
-					soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
 				}
+				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
 			}
 		}
 
@@ -9775,17 +9798,6 @@ var Layout = function () {
 			}
 		});
 
-		// --- capturar valor antigo exibido em #valor_pagar (antes de recalcular) ---
-		const normalizeToNumber = txt => {
-			const s = (txt || '').toString();
-			const cleaned = s.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
-			const n = parseFloat(cleaned);
-			return isNaN(n) ? 0 : n;
-		};
-		const old_valor_pagar_text = $("#valor_pagar").text() || '';
-		const old_valor_pagar_num = normalizeToNumber(old_valor_pagar_text);
-		// ----------------------------------------------------------------------
-
 		if (todosPagamentosAVista() && parseInt(avista, 10) == 1) {
 			atualizarValoresPDV(1);
 		} else {
@@ -9797,7 +9809,6 @@ var Layout = function () {
 			campoData.show();
 		}
 
-		// valida parcela corretamente
 		if (parcela === "" || parseInt(parcela, 10) === 0) parcela = 1;
 
 		// recupera valor total atual (v) - campo #valor2 (mostrado)
@@ -9805,32 +9816,26 @@ var Layout = function () {
 		var v = parseFloat(valorVisivel);
 		if (isNaN(v)) v = 0;
 
-		// valor_pago_digitado pode ser string "R$ 10,00" ou ""
 		var valor_pago_text = (valor_pago_digitado || '').toString().trim();
 
 		// Se não digitou, pega valor a pagar
-		if (!valor_pago_text || valor_pago_text === '0' || valor_pago_text === '0,00' || normalizeToNumber(valor_pago_text) === old_valor_pagar_num) {
+		if (!valor_pago_text || valor_pago_text === '0' || valor_pago_text === '0,00') {
 			valor_pago_text = $("#valor_pagar").text() || '0,00';
 		}
 
-		// Converte R$ "20,91" → float 20.91
 		var vp = parseFloat(valor_pago_text.replace(/[R$\s]/g, '').replace(',', '.'));
 		if (isNaN(vp)) vp = 0;
 
-
-		// acrescimo e desconto (parciais)
 		var a = parseReal($('#valor_acrescimo_modal').val());
 		if (isNaN(a)) a = 0;
 		var d = parseReal($('#valor_desconto_modal').val());
 		if (isNaN(d)) d = 0;
 
-		// atualiza visuais de acrescimo/desconto no PDV
 		var valor_acrescimo = 'R$ ' + parseFloat(a || 0).toFixed(2).toString().replace('.', ',');
 		$('#valor_acrescimo_pdv').text(valor_acrescimo);
 		var valor_desconto = 'R$ ' + parseFloat(d || 0).toFixed(2).toString().replace('.', ',');
 		$('#valor_desconto_pdv').text(valor_desconto);
 
-		// se vp <= 0 e ainda existe valor a pagar, foca input
 		if (vp <= 0 && (v + a - d > 0)) {
 			$('#valor_pago_modal').focus().select();
 			return false;
@@ -9850,15 +9855,12 @@ var Layout = function () {
 			data_boleto = dia + '/' + mes + '/' + ano;
 		}
 
-		// garante valor de tabela para cada produto (evita "undefined")
-		// (não é obrigatório aqui, mas deixa coerente se alguma rotina reler tabelas)
 		$('#tabela_produtos input.tabelas').each(function () {
 			if (!$(this).val() || $(this).val() === 'undefined') {
 				$(this).val($('#id_tabela_venda').val() || 0);
 			}
 		});
 
-		// insere linha de pagamento (formato apresentado = R$ 10,00) e os hidden corretos
 		var valorPagoFormatado = formatReal(vp);
 		var vpFixed = vp.toFixed(2);
 
@@ -9879,7 +9881,6 @@ var Layout = function () {
 			</tr>
 		`).find("tr").first().hide().fadeIn();
 
-		// somatório dos pagamentos
 		var soma = 0;
 		$('.valor_pago').each(function (indice, item) {
 			var i = $(item).val();
@@ -9890,14 +9891,12 @@ var Layout = function () {
 		var valor_pago_pdv = 'R$ ' + parseFloat(soma || 0).toFixed(2).replace('.', ',');
 		$('#valor_pago_pdv').text(valor_pago_pdv);
 
-		// soma dinheiro
 		var soma_dinheiro = 0;
 		$('.dinheiro').each(function (indice, item) {
 			var i = parseFloat($(item).val());
 			if (!isNaN(i)) soma_dinheiro += i;
 		});
 
-		// recalcula valor a pagar (v + a - d - soma)
 		var valor_pagar = v + a - d - soma;
 		if (valor_pagar < 0) valor_pagar = 0;
 		var resultado = 'R$ ' + parseFloat(valor_pagar).toFixed(2).replace('.', ',');
@@ -9907,7 +9906,6 @@ var Layout = function () {
 		$('#valor_pago_modal').val(valor_pagar.toFixed(2));
 		$('#valor_pagar_modal_pgto').val(valor_pagar.toFixed(2));
 
-		// troco
 		var soma_restante = soma - soma_dinheiro;
 		var total_pagar_dinheiro = v + a - d - soma_restante;
 		if (total_pagar_dinheiro < 0) total_pagar_dinheiro = 0;
@@ -10044,27 +10042,27 @@ var Layout = function () {
 		$('.valor_pago').each(function () {
 			soma_pagamentos += parseFloat($(this).val()) || 0;
 		});
-		console.log('Soma pagamentos: ' + soma_pagamentos);
 
-		let valor_pagar = (parseFloat(soma) + acrescimo - desconto - soma_pagamentos).toFixed(2);
-		$('#valor_pagar').text('R$ ' + valor_pagar.replace('.', ','));
+		let valor_pagar = (parseFloat(soma) + acrescimo - desconto).toFixed(2);
+		let valor_pago_venda = (parseFloat(valor_pagar) - soma_pagamentos).toFixed(2);
+		if(valor_pago_venda < 0) valor_pago_venda = (parseFloat(0)).toFixed(2);
+		$('#valor_pagar').text('R$ ' + valor_pago_venda.replace('.', ','));
 
 		let soma_dinheiro = 0;
 		$('.dinheiro').each(function () {
 			soma_dinheiro += parseFloat($(this).val()) || 0;
 		});
 
-		let restante = parseFloat(valor_pagar);
+		let restante = parseFloat(valor_pago_venda);
 		if (restante < 0) restante = 0;
 
 		$('#valor_pago_modal').val('R$ ' + restante.toFixed(2).replace('.', ','));
 		$('#valor_pagar_modal_pgto').val('R$ ' + restante.toFixed(2).replace('.', ','));
 
-		// calcular troco
-		let soma_restante = soma_pagamentos - soma_dinheiro;
-		let total_pagar_dinheiro = parseFloat(valor_pagar) - soma_restante;
-		let troco = soma_dinheiro - total_pagar_dinheiro;
-		if (troco < 0) troco = 0;
+		let troco = 0;
+		if(soma_pagamentos > valor_pagar){
+			troco = soma_pagamentos - valor_pagar;[]
+		}
 
 		$("#troco").text('R$ ' + troco.toFixed(2).replace('.', ','));
 	}
@@ -10196,7 +10194,6 @@ var Layout = function () {
 						var nomeProd = $('.selectProd option:selected').text();
 						var comprimento = parseFloat($('.selectProd option:selected').attr('comprimento')) || 1;
 						var largura = parseFloat($('.selectProd option:selected').attr('largura')) || 1;
-						console.log('Comprimento:', comprimento, 'Largura:', largura);
 						var corHex = $('.selectProd option:selected').attr('data-cor');
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
@@ -10421,7 +10418,6 @@ var Layout = function () {
 						if (isNaN(idProduto)) idProduto = 0;
 						var comprimento = parseFloat($('.selectProd option:selected').attr('comprimento')) || 1;
 						var largura = parseFloat($('.selectProd option:selected').attr('largura')) || 1;
-						console.log('Comprimento:', comprimento, 'Largura:', largura);
 						var nomeProd = $('.selectProd option:selected').text();
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
 						var estoqueProd = $('.selectProd option:selected').attr('estoqueProd');
@@ -10576,7 +10572,6 @@ var Layout = function () {
 							const v = parseFloat($(this).val()) || 0;
 							somaPagamentos += v;
 						});
-						console.log('Soma pagamentos: ', somaPagamentos);
 
 						var valor_pagar = soma + a - d - somaPagamentos;
 						valor_pagar = valor_pagar.toFixed(2);
