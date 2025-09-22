@@ -9575,23 +9575,21 @@ var Layout = function () {
 			const nome = ($tr.find('input.nome_produto_pdv').val() || $tr.find('span.font-md').first().text() || '').toString().trim();
 			const estoque = ($tr.find('input.estoque_produto_pdv').val() || $tr.find('input.estoque').val() || $tr.find('td').eq(2).text()).toString().trim();
 			const quantidade = $tr.find('.quant_venda').val() || '1.000';
+			const observacao = $tr.find('.obs_produto').val() || '';
 
-			// os inputs de valor podem ter classes diferentes; usamos qualquer um
 			const $inputValor = $tr.find('input.input-valor-normal, input.valor').first();
 			const valor_avista = parseFloat($inputValor.attr('valor_avista')) || 0;
 			const valor_normal = parseFloat($inputValor.attr('valor_normal')) || 0;
-			// encontra 'valor_lista' se o campo visível tem "R$ 0,91" etc
 			const valor_lista_text = $inputValor.val() || '';
 			const valor_lista = parseReal(valor_lista_text);
 			const comprimento = ($tr.find('input.comprimento_produto').val() || '0').toString().trim();
         	const largura = ($tr.find('input.largura_produto').val() || '0').toString().trim();
-			// tabela: tentar o hidden .tabelas, senão fallback para control de página
+
 			let tabela = $tr.find('input.tabelas').val();
 			if (!tabela || tabela === 'undefined') {
 				tabela = $('#id_tabela_venda').val() || 0;
 			}
 
-			// cor: preferir data-cor no input; se não houver, ler background-color do TR (inline)
 			let cor = $inputValor.attr('data-cor') || $tr.data('cor') || $tr.css('background-color') || '#ffffff';
 
 			produtos.push({
@@ -9609,9 +9607,7 @@ var Layout = function () {
 			});
 		});
 
-		// Se não existiam TRs (p. ex. primeiro carregamento), faz fallback para coletores originais
 		if (produtos.length === 0) {
-			// --- fallback: varrer os arrays como no código original ---
 			const quantArr = Array.from($('.quant_venda')).map(el => $(el).val() || '0');
 			const idArr = Array.from($('.id_produto')).map(el => $(el).val() || '');
 			const tabelaArr = Array.from($('.tabelas')).map(el => $(el).val() || $('#id_tabela_venda').val() || 0);
@@ -9622,6 +9618,7 @@ var Layout = function () {
 			const nomeArr = Array.from($('.nome_produto_pdv')).map(el => $(el).val() || '');
 			const comprimentoArr = Array.from($('.comprimento_produto')).map(el => $(el).val() || 1);
         	const larguraArr = Array.from($('.largura_produto')).map(el => $(el).val() || 1);
+			const observacaoArr = Array.from($('.observacao_produto')).map(el => $(el).val() || '');
 			for (let i = 0; i < idArr.length; i++) {
 				produtos.push({
 					id: idArr[i] || '',
@@ -9633,6 +9630,7 @@ var Layout = function () {
 					valor_lista: parseReal(valorInputs[i]),
 					valor_avista: parseFloat(valorAvistaArr[i]) || 0,
 					valor_normal: parseFloat(valorNormalArr[i]) || 0,
+					observacao: observacaoArr[i] || '',
 					tabela: tabelaArr[i] || $('#id_tabela_venda').val() || 0,
 					cor: '#ffffff'
 				});
@@ -9658,10 +9656,11 @@ var Layout = function () {
 				valor_pagar_produto = valor_venda_normal;
 			}
 
-			// garantir número correto
 			let quantidadeNum = parseFloat((prod.quantidade || '1').toString().replace(',', '.')) || 0;
-			// formatar para 3 casas
+			if (quantidadeNum <= 0) quantidadeNum = 1;
 			let quantidadeFmt = quantidadeNum.toFixed(3);
+
+			let observacao = (prod.observacao || '').toString().trim();
 
 			let total = (valor_pagar_produto * quantidadeNum * comprimento * largura) || 0;
 			let totalStr = total.toFixed(2);
@@ -9702,6 +9701,12 @@ var Layout = function () {
 						</span>
 					</td>
 					<td><span class="bold theme-font font-md valor_total">${valor_total_text}</span></td>
+					<td>
+						<span class="bold theme-font">
+							<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
+									name="observacao[]" value="${observacao}">
+						</span>
+					</td>
 					<td>
 						<a href="javascript:void(0);" class="btn red remover_produto_venda">
 							<i class="fa fa-times"></i>
@@ -9975,9 +9980,9 @@ var Layout = function () {
 
 	//#endregion 
 
-	/////////////////////////////////////
-	//#region edit: TABELA DE PRODUTOS//
-	////////////////////////////////////
+	/////////////////////////////////////////////
+	//#region editar TABELA DE PRODUTOS no PDV//
+    ///////////////////////////////////////////
 
 	// Calcular valor total do produto em cada row ao modificar valor, quantidade, comprimento ou largura
 	function recalcularLinha(produto) {
@@ -10277,6 +10282,12 @@ var Layout = function () {
 									</td>
 									<td><span class="bold theme-font font-md valor_total">${valor_total}</span></td>
 									<td>
+										<span class="bold theme-font">
+										<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
+												name="observacao[]" value="${observacao}">
+										</span>
+									</td>
+									<td>
 										<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" ...><i class="fa fa-dollar"></i></a>
 										<a href="javascript:void(0);" class="btn red remover_produto_venda" ...><i class="fa fa-times"></i></a>
 									</td>
@@ -10452,6 +10463,8 @@ var Layout = function () {
 							q = 1;
 						}
 						var quantidade = q.toFixed(3);
+						
+						var observacao = $('#observ_produto').text();
 
 						var total = valorProd * quantidade * comprimento * largura;
 						var valor_total = total.toFixed(2);
@@ -10489,6 +10502,12 @@ var Layout = function () {
 										</span>
 									</td>
 									<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
+									<td>
+										<span class="bold theme-font">
+										<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
+												name="observacao[]" value="${observacao}">
+										</span>
+									</td>
 									<td>
 										<a href="javascript:void(0);" class="btn btn_alterar_valor_produto_venda" title="Alterar valor deste produto?" style="background-color: #EECB00; color: #675800">
 											<i class="fa fa-dollar"></i>
@@ -10653,7 +10672,7 @@ var Layout = function () {
 	});
 
 
-	//#endregion MÓDULO: PDV F1
+	//#endregion 
 
 	//PASSAR MOUSE POR CIMA E MOSTRAR PREÇO DO PRODUTO
 	$(document).on('mouseenter', '.todos_produtos', function (e) {

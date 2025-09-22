@@ -295,6 +295,7 @@ function lang($phrase)
 		'VALOR_ITENS' => 'Valor itens',
 		'COMPRIMENTO' => 'Comprimento',
 		'LARGURA' => 'Largura',
+		'OBSERVACAO' => 'Observação',
 		'VALOR_TOTAL' => 'Valor total',
 		'VALOR_LIQUIDO' => 'Valor líquido',
 		'VALOR_UNITARIO' => 'Valor unitário',
