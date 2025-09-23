@@ -1057,14 +1057,14 @@ if (!$usuario->is_Todos())
 		</div>
 		<!-- FINAL CONTEUDO DA PAGINA -->
 	<?php break; ?>
-	<?php case "vendas_emitidas_lote": ?>
+	<?php 
+	case "vendas_emitidas_lote": ?>
 		<?php if (!$usuario->is_Todos()):
 			print Filter::msgInfo(lang('NAOAUTORIZADO'), false);
 			return;
 		endif;
 		$dataini = (get('dataini')) ? get('dataini') : date('d/m/Y');
-		$datafim = (get('datafim')) ? get('datafim') : date('d/m/Y');
-?>
+		$datafim = (get('datafim')) ? get('datafim') : date('d/m/Y'); ?>
 		<script type="text/javascript">
 			// <![CDATA[
 			$(document).ready(function () {

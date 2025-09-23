@@ -6192,6 +6192,8 @@ var Layout = function () {
 				$("#valor_venda_produto").val('');
 				$('#estoque').val('');
 				$("#quantidade").val('');
+				$("#comprimento").val('');
+				$("#largura").val('');
 				$("#quantidade_finalizar_venda").val('');
 				$("#id_ref_tabela").val(id_tabela);
 				$('#valor').val('');
@@ -9575,7 +9577,7 @@ var Layout = function () {
 			const nome = ($tr.find('input.nome_produto_pdv').val() || $tr.find('span.font-md').first().text() || '').toString().trim();
 			const estoque = ($tr.find('input.estoque_produto_pdv').val() || $tr.find('input.estoque').val() || $tr.find('td').eq(2).text()).toString().trim();
 			const quantidade = $tr.find('.quant_venda').val() || '1.000';
-			const observacao = $tr.find('.obs_produto').val() || '';
+			const observacao = $tr.find('.observacao_produto').val() || '';
 
 			const $inputValor = $tr.find('input.input-valor-normal, input.valor').first();
 			const valor_avista = parseFloat($inputValor.attr('valor_avista')) || 0;
@@ -9603,7 +9605,8 @@ var Layout = function () {
 				tabela,
 				cor,
 				comprimento,
-            	largura
+            	largura,
+				observacao
 			});
 		});
 
@@ -9703,8 +9706,8 @@ var Layout = function () {
 					<td><span class="bold theme-font font-md valor_total">${valor_total_text}</span></td>
 					<td>
 						<span class="bold theme-font">
-							<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
-									name="observacao[]" value="${observacao}">
+							<input type="text" class="form-control form-filter input-sm observacao_produto array" 
+									name="produto_observacao[]" value="${observacao}">
 						</span>
 					</td>
 					<td>
@@ -10283,8 +10286,8 @@ var Layout = function () {
 									<td><span class="bold theme-font font-md valor_total">${valor_total}</span></td>
 									<td>
 										<span class="bold theme-font">
-										<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
-												name="observacao[]" value="${observacao}">
+										<input type="text" class="form-control form-filter input-sm observacao array observacao_produto" 
+												name="produto_observacao[]" value="${observacao}">
 										</span>
 									</td>
 									<td>
@@ -10297,6 +10300,9 @@ var Layout = function () {
 									<input type="hidden" name="estoque_produto_pdv[]" class="estoque_produto_pdv" value="${estoqueProd}" />
 									<input type="hidden" name="id_produto[]" class="id_produto" value="${idProduto}" />
 									<input type="hidden" name="cor_produto_pdv[]" class="cor_produto_pdv" value="${corHex}" />
+									<input type="hidden" name="comprimento[]" class="comprimento_produto" value="${comprimento}" />
+									<input type="hidden" name="largura[]" class="largura_produto" value="${largura}" />
+									<input type="hidden" name="produto_observacao[]" class="observacao_produto" value="${observacao}" />
 									<input type="hidden" class="total" value="${total}" />
 									<input type="hidden" class="estoque" value="${estoqueProd}" />
 									<input type="hidden" name="tabelas[]" class="tabelas" value="${id_tabela}" />
@@ -10428,6 +10434,7 @@ var Layout = function () {
 
 						if (isNaN(idProduto)) idProduto = 0;
 						var comprimento = parseFloat($('.selectProd option:selected').attr('comprimento')) || 1;
+						var observacao = $('.selectProd option:selected').attr('produto_observacao') || '';
 						var largura = parseFloat($('.selectProd option:selected').attr('largura')) || 1;
 						var nomeProd = $('.selectProd option:selected').text();
 						var valorProd = parseFloat($('.selectProd option:selected').attr('valorProd'));
@@ -10463,9 +10470,7 @@ var Layout = function () {
 							q = 1;
 						}
 						var quantidade = q.toFixed(3);
-						
-						var observacao = $('#observ_produto').text();
-
+			
 						var total = valorProd * quantidade * comprimento * largura;
 						var valor_total = total.toFixed(2);
 
@@ -10474,7 +10479,7 @@ var Layout = function () {
 						valor_total = 'R$ ' + valor_total.replace('.', ',');
 
 						let modalActive = $('#modal_alterar_valor_produto_venda').val() == 1 ? 1 : 0;
-
+						
 						var table = $('#tabela_produtos');
 						if (idProduto > 0) {
 							table.prepend(
@@ -10495,7 +10500,7 @@ var Layout = function () {
 										<span class="bold theme-font">
 											<input type="text" class="form-control form-filter input-sm largura decimal largura_produto" name="largura[]" value="${largura}">
 										</span>
-									</td>
+									</td> 
 									<td>
 										<span class="bold theme-font">
 											<input type="text" class="form-control form-filter input-sm moeda valor input-valor-normal" name="valor_venda_tabela[]" valor_avista="${valor_venda_avista}" valor_normal="${valor_venda_normal}" value="${floatParaReal(valorProd)}" id="vlr_venda_produto" style="width: 90px">
@@ -10504,8 +10509,8 @@ var Layout = function () {
 									<td><span class="bold theme-font font-md valor_total">${valor_total}<span></td>
 									<td>
 										<span class="bold theme-font">
-										<input type="text" class="form-control form-filter input-sm observacao string observacao_produto" 
-												name="observacao[]" value="${observacao}">
+										<input type="text" class="form-control form-filter input-sm observacao array observacao_produto" 
+												name="produto_observacao[]" value="${observacao}">
 										</span>
 									</td>
 									<td>
@@ -10829,7 +10834,7 @@ var Layout = function () {
 		}
 	});
 
-	//ATALHO PARA FINALIZAR VENDA (F6) - em Vendas > Nova Venda PDV
+	//ATALHO PARA FINALIZAR VENDA (F6) - em Vendas > Nova Venda PDV / 
 	shortcut.add("F6", function () {
 		let product = $('#id_produto_venda').val();
 		let id_produto = $('.id_produto').val();

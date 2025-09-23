@@ -3934,6 +3934,9 @@ class Cadastro
 			$data_boleto_separado = (!empty($_POST['data_boleto_separado'])) ? $_POST['data_boleto_separado'] : 0;
 			$contar_produtos = (is_array($produtos)) ? count($produtos) : 0;
 			$contar_pagamentos = (is_array($pagamentos)) ? count($pagamentos) : 0;
+			$comprimento = (!empty($_POST['comprimento'])) ? $_POST['comprimento'] : [];
+			$largura     = (!empty($_POST['largura'])) ? $_POST['largura'] : [];
+			$observacao_produto = $_POST['produto_observacao'];
 
 			$pgto_avista = 1;
 			for ($j = 0; $j < $contar_pagamentos; $j++) {
@@ -4233,6 +4236,9 @@ class Cadastro
 					$valor_custo = getValue("valor_custo", "produto", "id=" . $id_produto);
 					$id_tabela = $tabelas[$i];
 					$valor_venda = converteMoeda($valor_venda_tabela[$i]);
+					$observacao_produtos = (!empty($observacao_produto[$i])) ? $observacao_produto[$i] : '';
+					$comprimento_produtos = ($comprimento[$i]) ? $comprimento[$i] : 0;
+					$largura_produtos     = ($largura[$i]) ? $largura[$i] : 0;
 
 					$valor_total = $valor_venda * $quantidade;
 					$valor_total = round($valor_total, 2);
@@ -4259,7 +4265,7 @@ class Cadastro
 					} else {
 						$valor_original = getValue("valor_venda", "produto_tabela", "id_tabela=" . $id_tabela . " AND id_produto=" . $id_produto);
 					}
-
+					//Salvar venda PDV
 					$data_cadastro_venda = array(
 						'id_empresa' => $id_empresa,
 						'id_cadastro' => $id_cadastro,
@@ -4275,6 +4281,9 @@ class Cadastro
 						'valor_desconto' => round($valor_desconto, 2),
 						'valor_total' => $valor_total,
 						'usuario' => session('nomeusuario'),
+						'comprimento' => $comprimento_produtos,
+						'largura'     => $largura_produtos,
+						'observacao' => $observacao_produtos,
 						'data' => "NOW()"
 					);
 
