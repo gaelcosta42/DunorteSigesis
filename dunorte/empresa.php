@@ -556,6 +556,26 @@ if (!$usuario->is_Administrativo())
 																</div>
 															</div>
 														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
+																	class="control-label col-md-3"><?php echo lang('TAXA_FIXA_ENTREGA'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control caps" name="taxa_fixa_entrega"
+																		id="taxa_fixa_entrega" value="<?php echo $row->taxa_fixa_entrega; ?>">
+																</div>
+															</div>
+														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
+																	class="control-label col-md-3"><?php echo lang('INFO_ADICIONAL_RECIBO'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control caps" name="info_adicional_recibo"
+																		id="info_adicional_recibo" value="<?php echo $row->info_adicional_recibo; ?>">
+																</div>
+															</div>
+														</div>
 														<?php if ($usuario->is_Controller()): ?>
 															<div class="row">
 																<div class="form-group">
@@ -570,7 +590,8 @@ if (!$usuario->is_Administrativo())
 																					<span></span>
 																					<span class="check"></span>
 																					<span class="box"></span>
-																					<?php echo lang('FISCAL_NFC'); ?></label>
+																					<?php echo lang('FISCAL_NFC'); ?>
+																				</label>
 																			</div>
 																		</div>
 																	</div>

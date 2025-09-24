@@ -53,6 +53,7 @@ class Core
     public $modal_cancelar_produto_venda;
     public $modal_alterar_valor_produto_venda;
     public float $taxa_fixa_entrega;
+    public $info_adicional_recibo;
 
     /**
      * Core::__construct()
@@ -114,6 +115,7 @@ class Core
         $this->modal_cancelar_produto_venda = $row_empresa->modal_cancelar_produto_venda;
         $this->modal_alterar_valor_produto_venda = $row_empresa->modal_alterar_valor_produto_venda;
         $this->taxa_fixa_entrega = $row_empresa->taxa_fixa_entrega;
+        $this->info_adicional_recibo = $row_empresa->info_adicional_recibo;
     }
 
     /**
