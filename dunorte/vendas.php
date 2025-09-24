@@ -5199,6 +5199,7 @@ if (!$usuario->is_Todos())
 				<input type="hidden" name="data_boleto" id="data_boleto" class="form-control data calendario">
 				<input type="hidden" name="valor_desconto" id="valor_desconto_rapida" class="form-control moeda">
 				<input type="hidden" name="descporcentagem" id="valor_desconto_porcentagem" class="form-control desconto">
+				<input type="hidden" id="taxa_fixa_entrega" value="<?php echo $core->taxa_fixa_entrega ?>">
 				<input type="hidden" name="valor_acrescimo" id="valor_acrescimo_rapida" class="form-control moeda">
 				<input type="hidden" id="valor_pago" class="form-control moeda valor_pago_venda">
 				<input type="hidden" id="parcelas" class="form-control inteiro">

@@ -10335,7 +10335,6 @@ var Layout = function () {
 							$("#valor2").text(resultado);
 							$('#valor_total_modal').val(resultado);
 
-
 							var desconto = $('#valor_desconto_modal').val();
 							var d = desconto.replace('.', '');
 							d = d.replace(',', '.');
@@ -10358,13 +10357,18 @@ var Layout = function () {
 								a = 0;
 							}
 
+							var taxa = $("#taxa_fixa_entrega").val();
+							taxa = parseFloat(taxa) || 0;
+
+							$('#valor_acrescimo_pdv').text('R$' + taxa);
+
 							var somaPagamentos = 0;
 							$('.valor_pago').each(function () {
 								const v = parseFloat($(this).val()) || 0;
 								somaPagamentos += v;
 							});
 
-							var valor_pagar = soma + a - d - somaPagamentos;
+							var valor_pagar = soma + a + taxa - d - somaPagamentos;
 							valor_pagar = valor_pagar.toFixed(2);
 							valor_pagar = valor_pagar.toString();
 							valor_pagar = valor_pagar.replace('.', ',');
@@ -10401,7 +10405,7 @@ var Layout = function () {
 								}
 							});
 
-							var valor_pagar = v + a - d - soma;
+							var valor_pagar = v + a + taxa - d - soma;
 							if (valor_pagar < 0) {
 								valor_pagar = 0;
 							}
@@ -10416,7 +10420,7 @@ var Layout = function () {
 							$('#show_valor_pagar_modal').val(resultado);
 
 							var soma_restante = soma - soma_dinheiro;
-							var total_pagar_dinheiro = v + a - d - soma_restante;
+							var total_pagar_dinheiro = v + a + taxa - d - soma_restante;
 							var troco = soma_dinheiro - total_pagar_dinheiro;
 
 							if (troco < 0) {
@@ -10591,17 +10595,16 @@ var Layout = function () {
 							a = 0;
 						}
 
+						var taxa = $("#taxa_fixa_entrega").val();
+						taxa = parseFloat(taxa) || 0;
+
+						$('#valor_acrescimo_pdv').text('R$' + taxa);
+			
 						var somaPagamentos = 0;
 						$('.valor_pago').each(function () {
 							const v = parseFloat($(this).val()) || 0;
 							somaPagamentos += v;
 						});
-
-						var valor_pagar = soma + a - d - somaPagamentos;
-						valor_pagar = valor_pagar.toFixed(2);
-						valor_pagar = valor_pagar.toString();
-						valor_pagar = valor_pagar.replace('.', ',');
-						$('#valor_pagar').text('R$ ' + valor_pagar);
 
 						$('.valor_pago_venda').val(resultado);
 						$('#valor_pago_modal').val(resultado);
@@ -10639,19 +10642,21 @@ var Layout = function () {
 							}
 						});
 
-						var valor_pagar = v + a - d - soma;
+						var valor_pagar = v + a + taxa - d - soma;
+						console.log("3 Valor a pagar:" + valor_pagar);
 						if (valor_pagar < 0) {
 							valor_pagar = 0;
 						}
 						var resultado = valor_pagar.toFixed(2);
 						resultado = resultado.toString();
 						resultado = 'R$ ' + resultado.replace('.', ',');
+						console.log("4 Valor a pagar:" + valor_pagar);
 						$("#valor_pagar").text(resultado);
 						$('#valor_pago_modal').val(resultado);
 						$('#valor_pagar_modal_pgto').val(resultado);
 
 						var soma_restante = soma - soma_dinheiro;
-						var total_pagar_dinheiro = v + a - d - soma_restante;
+						var total_pagar_dinheiro = v + a + taxa - d - soma_restante;
 						var troco = soma_dinheiro - total_pagar_dinheiro;
 
 						if (troco < 0) {
