@@ -293,9 +293,12 @@ function lang($phrase)
 		'RECIBO_NAO_FISCAL' => 'Recibo não fiscal',
 		'VALOR_RESTANTE' => 'Valor restante',
 		'VALOR_ITENS' => 'Valor itens',
+		
 		'COMPRIMENTO' => 'Comprimento',
 		'LARGURA' => 'Largura',
-		'OBSERVACAO' => 'Observação',
+		'TAXA_FIXA_ENTREGA' => 'Taxa fixa de entrega',
+		'INFO_ADICIONAL_RECIBO' => 'Informação adicional no recibo',
+
 		'VALOR_TOTAL' => 'Valor total',
 		'VALOR_LIQUIDO' => 'Valor líquido',
 		'VALOR_UNITARIO' => 'Valor unitário',

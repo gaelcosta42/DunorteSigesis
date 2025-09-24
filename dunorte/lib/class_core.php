@@ -52,6 +52,7 @@ class Core
     public $aplicativo_estoque;
     public $modal_cancelar_produto_venda;
     public $modal_alterar_valor_produto_venda;
+    public float $taxa_fixa_entrega;
 
     /**
      * Core::__construct()
@@ -112,6 +113,7 @@ class Core
         $this->aplicativo_estoque = $row_empresa->aplicativo_estoque;
         $this->modal_cancelar_produto_venda = $row_empresa->modal_cancelar_produto_venda;
         $this->modal_alterar_valor_produto_venda = $row_empresa->modal_alterar_valor_produto_venda;
+        $this->taxa_fixa_entrega = $row_empresa->taxa_fixa_entrega;
     }
 
     /**

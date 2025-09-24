@@ -1897,6 +1897,26 @@ if (!$usuario->is_Administrativo())
 																</div>
 															</div>
 														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
+																	class="control-label col-md-3"><?php echo lang('TAXA_FIXA_ENTREGA'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control"
+																		name="taxa_fixa_entrega">
+																</div>
+															</div>
+														</div>
+														<div class="row">
+															<div class="form-group">
+																<label
+																	class="control-label col-md-3"><?php echo lang('INFO_ADICIONAL_RECIBO'); ?></label>
+																<div class="col-md-9">
+																	<input type="text" class="form-control"
+																		name="info_adicional_recibo">
+																</div>
+															</div>
+														</div>
 													</div>
 													<!--/col-md-6-->
 												</div>

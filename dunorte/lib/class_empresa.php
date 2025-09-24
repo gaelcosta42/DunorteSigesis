@@ -92,6 +92,8 @@
 					'bairro' => sanitize(post('bairro')),  
 					'cidade' => sanitize(post('cidade')),  
 					'estado' => sanitize(post('estado')),  
+                    'taxa_fixa_entrega' => converteMoeda(post('taxa_fixa_entrega')),
+                    'info_adicional_recibo' => sanitize(post('info_adicional_recibo')),
 					'perfil_empresa' => sanitize(post('perfil_empresa')),
 					'cep' => sanitize(post('cep')), 
 					'responsavel' => sanitize(post('responsavel')), 
