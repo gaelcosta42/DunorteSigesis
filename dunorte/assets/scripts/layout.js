@@ -5709,178 +5709,7 @@ var Layout = function () {
 	});
 
 
-	function atualizaValoresPDVQuandoRemoveProduto() {
-		var soma = 0;
-		$('.total').each(function (indice, item) {
-			var i = $(item).val();
-			var v = parseFloat(i);
-			vlr = v.toFixed(2);
-			if (!isNaN(v)) {
-				soma += parseFloat(vlr);
-			}
-		});
-		soma = soma.toFixed(2);
-		$("#valor").val(soma);
-		var resultado = soma.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#valor2").text(resultado);
 
-		var desconto = $("#valor_desconto_modal").val();
-		var d = desconto.replace('.', '');
-		d = d.replace(',', '.');
-		d = d.replace('R$ ', '');
-		d = parseFloat(d);
-		if (isNaN(d)) {
-			d = 0;
-		}
-		var somaPagamentos = 0;
-		$('.valor_pago').each(function () {
-			const v = parseFloat($(this).val()) || 0;
-			somaPagamentos += v;
-		});
-
-		var acrescimo = $("#valor_acrescimo_modal").val();
-		var a = acrescimo.replace('.', '');
-		a = a.replace(',', '.');
-		a = a.replace('R$ ', '');
-		a = parseFloat(a);
-		if (isNaN(a)) {
-			a = 0;
-		}
-
-		var valor_pagar = soma + a - d - somaPagamentos;
-
-		if (d > 0) {
-			$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
-		}
-
-		valor_pagar = valor_pagar.toFixed(2);
-		valor_pagar = valor_pagar.toString();
-		valor_pagar = valor_pagar.replace('.', ',');
-		$('#valor_pagar').text('R$ ' + valor_pagar);
-
-		var valor = $("#valor").val();
-		var v = parseFloat(valor);
-		if (isNaN(v)) {
-			v = 0;
-		}
-
-		var desconto = $("#valor_desconto_modal").val();
-		var d = desconto.replace('.', '');
-		d = d.replace(',', '.');
-		d = d.replace('R$ ', '');
-		d = parseFloat(d);
-		if (isNaN(d)) {
-			d = 0;
-		}
-		var soma = 0;
-		$('.valor_pago').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma += p;
-			}
-		});
-		var soma_dinheiro = 0;
-		$('.dinheiro').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				soma_dinheiro += p;
-			}
-		});
-
-		var valor_pagar = v + a - d - soma;
-		if (valor_pagar < 0) {
-			valor_pagar = 0;
-		}
-		var resultado = valor_pagar.toFixed(2);
-		resultado = resultado.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#valor_pagar").text(resultado);
-
-		$('.valor_pago_venda').val(resultado); //Quando remove o produto da venda, o valor altera.
-		$('#valor_pago_modal').val(resultado);
-		$('#valor_pagar_modal_pgto').val(resultado);
-
-		var soma_restante = soma - soma_dinheiro;
-		var total_pagar_dinheiro = v + a - d - soma_restante;
-		var troco = soma_dinheiro - total_pagar_dinheiro;
-
-		if (troco < 0) {
-			troco = 0;
-		}
-
-		resultado = troco.toFixed(2);
-		resultado = resultado.toString();
-		resultado = 'R$ ' + resultado.replace('.', ',');
-		$("#troco").text(resultado);
-	}
-
-
-	// VENDAS/PEDIDO - Remover produto na venda rapida
-	$(document).on('click', 'a.remover_produto_venda', function () {
-
-		var item = $(this).parents("tr");
-
-		//Remove produto se o PIN estiver correto
-		if ($('#modal_cancelar_produto_venda').val() == 1) {
-			$('#modal_cancelamento_produto').modal('show');
-			$('#pinUserCancel').val('');
-
-			$('.btn-form-cancelamento').click(function () {
-				const pinUser = $('#pinUserCancel').val();
-				$.ajax({
-					method: 'POST',
-					url: 'controller.php',
-					data: 'verificarPinProdutoVenda=1&pin=' + pinUser,
-					success: function (data) {
-						let res = parseFloat(data.trim());
-						if (res === 1) {
-							$('.info-pin-incorreto').addClass('hidden');
-							$('#modal_cancelamento_produto').modal('hide');
-							item.remove();
-							atualizaValoresPDVQuandoRemoveProduto();
-						} else {
-							$('.info-pin-incorreto').removeClass('hidden');
-							$('#pinUserCancel').val('');
-							return false;
-						}
-					}
-				});
-			});
-
-			$(document).on('keyup', '#pinUserCancel', function (event) {
-				if (event.which == 13 || event.keyCode == 13) {
-					const pinUser = $('#pinUserCancel').val();
-					$.ajax({
-						method: 'POST',
-						url: 'controller.php',
-						data: 'verificarPinProdutoVenda=1&pin=' + pinUser,
-						success: function (data) {
-							let res = parseFloat(data.trim());
-							if (res === 1) {
-								$('.info-pin-incorreto').addClass('hidden');
-								$('#modal_cancelamento_produto').modal('hide');
-								item.remove();
-								atualizaValoresPDVQuandoRemoveProduto();
-							} else {
-								$('.info-pin-incorreto').removeClass('hidden');
-								$('#pinUserCancel').val('');
-								return false;
-							}
-						}
-					});
-				}
-			});
-
-		} else {
-			item.remove();
-			atualizaValoresPDVQuandoRemoveProduto();
-		}
-
-
-	});
 
 	// VENDAS/PEDIDO - Remover pagamento na venda rapida
 	$(document).on('click', 'a.remover_pagamento', function () {
@@ -10036,6 +9865,10 @@ var Layout = function () {
 		});
 
 		let acrescimo = parseFloat($("#valor_acrescimo_rapida").val().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+		let taxa = $("#taxa_fixa_entrega").val();
+		taxa = parseFloat(taxa) || 0;
+
+		$('#valor_acrescimo_pdv').text('R$' + taxa);
 		let desconto = parseFloat($("#valor_desconto_modal").val().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 
 		soma = soma.toFixed(2);
@@ -10051,7 +9884,7 @@ var Layout = function () {
 			soma_pagamentos += parseFloat($(this).val()) || 0;
 		});
 
-		let valor_pagar = (parseFloat(soma) + acrescimo - desconto).toFixed(2);
+		let valor_pagar = (parseFloat(soma) + acrescimo + taxa - desconto).toFixed(2);
 		let valor_pago_venda = (parseFloat(valor_pagar) - soma_pagamentos).toFixed(2);
 		if(valor_pago_venda < 0) valor_pago_venda = (parseFloat(0)).toFixed(2);
 		$('#valor_pagar').text('R$ ' + valor_pago_venda.replace('.', ','));
@@ -10679,6 +10512,183 @@ var Layout = function () {
 
 	$('.modal_adicionar_produto').click(function () {
 		modalProdutosComF1();
+	});
+
+	function atualizaValoresPDVQuandoRemoveProduto() {
+		var soma = 0;
+		$('.total').each(function (indice, item) {
+			var i = $(item).val();
+			var v = parseFloat(i);
+			vlr = v.toFixed(2);
+			if (!isNaN(v)) {
+				soma += parseFloat(vlr);
+			}
+		});
+		soma = soma.toFixed(2);
+		$("#valor").val(soma);
+		var resultado = soma.toString();
+		resultado = 'R$ ' + resultado.replace('.', ',');
+		$("#valor2").text(resultado);
+
+		var desconto = $("#valor_desconto_modal").val();
+		var d = desconto.replace('.', '');
+		d = d.replace(',', '.');
+		d = d.replace('R$ ', '');
+		d = parseFloat(d);
+		if (isNaN(d)) {
+			d = 0;
+		}
+		var somaPagamentos = 0;
+		$('.valor_pago').each(function () {
+			const v = parseFloat($(this).val()) || 0;
+			somaPagamentos += v;
+		});
+
+		var acrescimo = $("#valor_acrescimo_modal").val();
+		var a = acrescimo.replace('.', '');
+		a = a.replace(',', '.');
+		a = a.replace('R$ ', '');
+		a = parseFloat(a);
+		if (isNaN(a)) {
+			a = 0;
+		}
+
+		var taxa = $("#taxa_fixa_entrega").val();
+		taxa = parseFloat(taxa) || 0;
+
+		$('#valor_acrescimo_pdv').text('R$' + taxa);
+
+		var valor_pagar = soma + a + taxa - d - somaPagamentos;
+
+		if (d > 0) {
+			$("#valor_desconto_modal").trigger({ type: 'keyup', which: 13, keyCode: 13 });
+		}
+
+		valor_pagar = valor_pagar.toFixed(2);
+		valor_pagar = valor_pagar.toString();
+		valor_pagar = valor_pagar.replace('.', ',');
+		$('#valor_pagar').text('R$ ' + valor_pagar);
+
+		var valor = $("#valor").val();
+		var v = parseFloat(valor);
+		if (isNaN(v)) {
+			v = 0;
+		}
+
+		var desconto = $("#valor_desconto_modal").val();
+		var d = desconto.replace('.', '');
+		d = d.replace(',', '.');
+		d = d.replace('R$ ', '');
+		d = parseFloat(d);
+		if (isNaN(d)) {
+			d = 0;
+		}
+		var soma = 0;
+		$('.valor_pago').each(function (indice, item) {
+			var i = $(item).val();
+			var p = parseFloat(i);
+			if (!isNaN(p)) {
+				soma += p;
+			}
+		});
+		var soma_dinheiro = 0;
+		$('.dinheiro').each(function (indice, item) {
+			var i = $(item).val();
+			var p = parseFloat(i);
+			if (!isNaN(p)) {
+				soma_dinheiro += p;
+			}
+		});
+
+		var valor_pagar = v + a + taxa - d - soma;
+		if (valor_pagar < 0) {
+			valor_pagar = 0;
+		}
+		var resultado = valor_pagar.toFixed(2);
+		resultado = resultado.toString();
+		resultado = 'R$ ' + resultado.replace('.', ',');
+		$("#valor_pagar").text(resultado);
+
+		$('.valor_pago_venda').val(resultado); 
+		$('#valor_pago_modal').val(resultado);
+		$('#valor_pagar_modal_pgto').val(resultado);
+
+		var soma_restante = soma - soma_dinheiro;
+		var total_pagar_dinheiro = v + a + taxa - d - soma_restante;
+		var troco = soma_dinheiro - total_pagar_dinheiro;
+
+		if (troco < 0) {
+			troco = 0;
+		}
+
+		resultado = troco.toFixed(2);
+		resultado = resultado.toString();
+		resultado = 'R$ ' + resultado.replace('.', ',');
+		$("#troco").text(resultado);
+	}
+
+	// Também remove produto na venda rapida
+	$(document).on('click', 'a.remover_produto_venda', function () {
+
+		var item = $(this).parents("tr");
+
+		//Remove produto se o PIN estiver correto
+		if ($('#modal_cancelar_produto_venda').val() == 1) {
+			$('#modal_cancelamento_produto').modal('show');
+			$('#pinUserCancel').val('');
+
+			$('.btn-form-cancelamento').click(function () {
+				const pinUser = $('#pinUserCancel').val();
+				$.ajax({
+					method: 'POST',
+					url: 'controller.php',
+					data: 'verificarPinProdutoVenda=1&pin=' + pinUser,
+					success: function (data) {
+						let res = parseFloat(data.trim());
+						if (res === 1) {
+							$('.info-pin-incorreto').addClass('hidden');
+							$('#modal_cancelamento_produto').modal('hide');
+							item.remove();
+							atualizaValoresPDVQuandoRemoveProduto();
+						} else {
+							$('.info-pin-incorreto').removeClass('hidden');
+							$('#pinUserCancel').val('');
+							return false;
+						}
+					}
+				});
+			});
+
+			$(document).on('keyup', '#pinUserCancel', function (event) {
+				if (event.which == 13 || event.keyCode == 13) {
+					const pinUser = $('#pinUserCancel').val();
+					$.ajax({
+						method: 'POST',
+						url: 'controller.php',
+						data: 'verificarPinProdutoVenda=1&pin=' + pinUser,
+						success: function (data) {
+							let res = parseFloat(data.trim());
+							if (res === 1) {
+								$('.info-pin-incorreto').addClass('hidden');
+								$('#modal_cancelamento_produto').modal('hide');
+								item.remove();
+								atualizaValoresPDVQuandoRemoveProduto();
+							} else {
+								$('.info-pin-incorreto').removeClass('hidden');
+								$('#pinUserCancel').val('');
+								return false;
+							}
+						}
+					});
+				}
+			});
+
+		} else {
+			item.remove();
+			atualizaValoresPDVQuandoRemoveProduto();
+		}
+
+
 	});
 
 
