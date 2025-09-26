@@ -5708,9 +5708,6 @@ var Layout = function () {
 		$("#val_desc").val(calculo_porcent);
 	});
 
-
-
-
 	// VENDAS/PEDIDO - Remover pagamento na venda rapida
 	$(document).on('click', 'a.remover_pagamento', function () {
 		var item = $(this).parents("tr");
@@ -5760,10 +5757,13 @@ var Layout = function () {
 		d = d.replace(',', '.');
 		d = d.replace('R$ ', '');
 		d = parseFloat(d);
+
+
 		if (isNaN(d) || existePagamento == 0) {
 			d = 0;
 			$("#valor_desconto_modal").val(0);
 			$("#valor_desconto_rapida").val(0);
+			$("#valor_desconto_porcentagem_modal").val(0);
 		}
 		var valor_desconto = d.toFixed(2);
 		valor_desconto = 'R$ ' + valor_desconto.toString().replace('.', ',');
@@ -8743,7 +8743,7 @@ var Layout = function () {
 	///////////////////////
 	///	INICIO NOVO PDV	///
 	///////////////////////
-	//Campo de desconto dentro do modal pagamento
+
 	$('#valor_desconto_modal').keyup(function (event) {
 
 		if (event.which == 13 || event.keyCode == 13) {
@@ -8757,6 +8757,13 @@ var Layout = function () {
 				v = parseFloat(0).toFixed(2);
 			}
 
+			var total = $("#valor2").text();
+			t = total.replace('R$ ', '').replace(',', '.');
+			t = parseFloat(t).toFixed(2);
+			if (isNaN(t)) {
+				t = parseFloat(0).toFixed(2);
+			}
+
 			var desconto = $("#valor_desconto_modal").val();
 			var d = desconto.replace('.', '');
 			d = d.replace(',', '.');
@@ -8768,7 +8775,6 @@ var Layout = function () {
 
 			$('#valor_desconto_rapida').val(parseFloat(d));
 
-			// var acrescimo = $("#valor_acrescimo_rapida").val();
 			var acrescimo = $("#valor_acrescimo_modal").val();
 			var a = acrescimo.replace('.', '');
 			a = a.replace(',', '.');
@@ -8807,7 +8813,7 @@ var Layout = function () {
 				}
 			});
 
-			var valor_pagar = parseFloat(v) + parseFloat(a) + taxa - parseFloat(d) - parseFloat(soma);
+			var valor_pagar = parseFloat(t) + parseFloat(a) + taxa - parseFloat(d) - parseFloat(soma);
 
 			if (valor_pagar < 0) {
 				valor_pagar = parseFloat(0).toFixed(2);
@@ -8817,11 +8823,11 @@ var Layout = function () {
 			resultado = 'R$ ' + resultado.replace('.', ',');
 			$("#valor_pagar").text(resultado);
 
-			$('.valor_pago_venda').val(resultado); // Quando selecionar o tipo de pagamento, o campo valor em Vendas > Nova venda terá o valor a pagar
+			$('.valor_pago_venda').val(resultado); 
 			$('#valor_pago_modal').val(resultado);
 
 			var soma_restante = parseFloat(soma) - parseFloat(soma_dinheiro);
-			var total_pagar_dinheiro = parseFloat(v) + parseFloat(a) - parseFloat(d) - parseFloat(soma_restante);
+			var total_pagar_dinheiro = parseFloat(t) + parseFloat(a) + taxa - parseFloat(d) - parseFloat(soma_restante);
 			var troco = parseFloat(soma_dinheiro) - parseFloat(total_pagar_dinheiro);
 
 			if (troco < 0) {
@@ -8842,9 +8848,6 @@ var Layout = function () {
 				return false;
 			}
 
-			//Desconto em porcentagem - Valor desconto -> Desconto total em porcentagem
-
-			// let valor_desconto = $("#valor_desconto_rapida").val();
 			let valor_desconto = $("#valor_desconto_modal").val();
 
 			valor_desconto = valor_desconto.replace('.', '');
@@ -8859,14 +8862,13 @@ var Layout = function () {
 
 			let calc_porcent = ((valor_desconto * 100) / valor_total);
 			calc_porcent = calc_porcent.toFixed(2);
-			//calc_porcent = '% ' + calc_porcent.toString();
+			console.log(calc_porcent + ' ' + valor_desconto);
 			$("#valor_desconto_porcentagem").val(calc_porcent);
 			$('#valor_desconto_porcentagem_modal').val(calc_porcent);
 		}
 
 	});
 
-	//Campo de parcelas dentro do modal pagamento
 	$('#parcelas_modal').keyup(function (e) {
 
 		if (e.which == 13 || e.keyCode == 13) {
@@ -8889,8 +8891,14 @@ var Layout = function () {
 			v = parseFloat(0).toFixed(2);
 		}
 
-		var acrescimo = $("#valor_acrescimo_modal").val();
+		var total = $("#valor2").text();
+		t = total.replace('R$ ', '').replace(',', '.');
+		t = parseFloat(t).toFixed(2);
+		if (isNaN(t)) {
+			t = parseFloat(0).toFixed(2);
+		}
 
+		var acrescimo = $("#valor_acrescimo_modal").val();
 		var a = acrescimo.replace('.', '');
 		a = a.replace(',', '.');
 		a = a.replace('R$ ', '');
@@ -8898,6 +8906,9 @@ var Layout = function () {
 		if (isNaN(a)) {
 			a = parseFloat(0).toFixed(2);
 		}
+
+		var taxa = $("#taxa_fixa_entrega").val();
+		taxa = parseFloat(taxa) || 0;
 
 		var acrescimo_rapida = parseFloat(a);
 		$('#valor_acrescimo_rapida').val(acrescimo_rapida);
@@ -8920,7 +8931,7 @@ var Layout = function () {
 		}
 
 		var soma = 0;
-		$('.valor_pago').each(function (indice, item) {
+		$('.valor_pago').each(function (_, item) {
 			var i = $(item).val();
 			var p = parseFloat(i).toFixed(2);
 			if (!isNaN(p)) {
@@ -8938,9 +8949,9 @@ var Layout = function () {
 			}
 		});
 
-		var valor_pagar = parseFloat(v) + parseFloat(a) - parseFloat(d) - parseFloat(soma);
+		var valor_pagar = parseFloat(t) + parseFloat(a) + taxa - parseFloat(d) - parseFloat(soma);
 		if (valor_pagar < 0) {
-			valor_pagar = parseFloat(0).toFixed(2);
+			valor_pagar = parseFloat(0);
 		}
 
 		var resultado = valor_pagar.toFixed(2);
@@ -8948,11 +8959,11 @@ var Layout = function () {
 		resultado = 'R$ ' + resultado.replace('.', ',');
 		$("#valor_pagar").text(resultado);
 
-		$('.valor_pago_venda').val(resultado); // Quando selecionar o tipo de pagamento, o campo valor em Vendas > Nova venda terá o valor a pagar
+		$('.valor_pago_venda').val(resultado);
 		$('#valor_pago_modal').val(resultado);
 
 		var soma_restante = parseFloat(soma) - parseFloat(soma_dinheiro);
-		var total_pagar_dinheiro = parseFloat(v) + parseFloat(a) - parseFloat(d) - parseFloat(soma_restante);
+		var total_pagar_dinheiro = parseFloat(v) + parseFloat(a) + taxa - parseFloat(d) - parseFloat(soma_restante);
 		var troco = parseFloat(soma_dinheiro) - parseFloat(total_pagar_dinheiro);
 
 		if (troco < 0) {
@@ -8973,9 +8984,6 @@ var Layout = function () {
 			return false;
 		}
 
-		//Desconto em porcentagem - Valor desconto -> Desconto total em porcentagem
-
-		// let valor_desconto = $("#valor_desconto_rapida").val();
 		let valor_desconto = $("#valor_desconto_modal").val();
 
 		valor_desconto = valor_desconto.replace('.', '');
@@ -8988,6 +8996,7 @@ var Layout = function () {
 			valor_total = valor_total.replace('R$ ', '');
 			let calc_porcent = ((valor_desconto * 100) / valor_total);
 			calc_porcent = calc_porcent.toFixed(2);
+			console.log(calc_porcent);
 			//calc_porcent = '% ' + calc_porcent.toString();
 			$("#valor_desconto_porcentagem").val(calc_porcent);
 			$('#valor_desconto_porcentagem_modal').val(calc_porcent);
@@ -9009,16 +9018,11 @@ var Layout = function () {
 			p = 0;
 		}
 
-		var valor = $("#valor_pagar_modal_pgto").val();
-		v = valor.replace('R$ ', '').replace(',', '.');
-		v = parseFloat(v).toFixed(2);
-		if (isNaN(v)) {
-			v = 0;
-		}
+		var total = $("#valor2").text();
+		t = Number(parseFloat(total.replace('R$ ', '').replace(',', '.')).toFixed(2));
 
-		let valor_porcentagem = (v * p) / 100;
+		let valor_porcentagem = (t * p) / 100;
 		valor_porcentagem = Math.floor(valor_porcentagem * 100) / 100;
-
 		$("#valor_desconto_modal").val(floatParaReal(valor_porcentagem));
 
 		let d = valor_porcentagem;
@@ -9037,7 +9041,7 @@ var Layout = function () {
 		var taxa = $("#taxa_fixa_entrega").val();
 		taxa = parseFloat(taxa) || 0;
 
-		if (d > v) {
+		if (d > t) {
 			alert('Desconto maior que o valor total da venda.3');
 			$("#valor_desconto_modal").val('R$ 0.00');
 			$("#valor_desconto_porcentagem").val(0.0);
@@ -9047,7 +9051,7 @@ var Layout = function () {
 		}
 
 		var soma = 0;
-		$('.valor_pago').each(function (indice, item) {
+		$('.valor_pago').each(function (_, item) {
 			var i = $(item).val();
 			var p = parseFloat(i);
 			if (!isNaN(p)) {
@@ -9056,7 +9060,7 @@ var Layout = function () {
 		});
 
 		var soma_dinheiro = 0;
-		$('.dinheiro').each(function (indice, item) {
+		$('.dinheiro').each(function (_, item) {
 			var i = $(item).val();
 			var p = parseFloat(i);
 			if (!isNaN(p)) {
@@ -9064,7 +9068,7 @@ var Layout = function () {
 			}
 		});
 
-		var valor_pagar = v + a + taxa - d - soma;
+		var valor_pagar = t + a + taxa - d - soma;
 		if (valor_pagar < 0) {
 			valor_pagar = 0;
 		}
@@ -9073,11 +9077,11 @@ var Layout = function () {
 		resultado = 'R$ ' + resultado.replace('.', ',');
 		$("#valor_pagar").text(resultado);
 
-		$('.valor_pago_venda').val(resultado); // Quando selecionar o tipo de pagamento, o campo valor em Vendas > Nova venda terá o valor a pagar
+		$('.valor_pago_venda').val(resultado); 
 		$('#valor_pago_modal').val(resultado);
 
 		var soma_restante = soma - soma_dinheiro;
-		var total_pagar_dinheiro = v + a - d - soma_restante;
+		var total_pagar_dinheiro = t + a + taxa - d - soma_restante;
 		var troco = soma_dinheiro - total_pagar_dinheiro;
 
 		if (troco < 0) {
@@ -9245,6 +9249,7 @@ var Layout = function () {
 
 		var taxa = $("#taxa_fixa_entrega").val();
 		taxa = parseFloat(taxa) || 0;
+
 		var acrescimo = $('#valor_acrescimo_modal').val();
 		var a = acrescimo.replace('.', '');
 		a = a.replace(',', '.');
@@ -10834,6 +10839,7 @@ var Layout = function () {
 		}
 
 		let valor_original_pagamento = $('#valor_pagar_modal_pgto').val();
+
 		let valor_d = $('#valor_desconto_modal').val();
 		let vd = valor_d.replace("R$", "");
 		vd = vd.replace(",", ".");
