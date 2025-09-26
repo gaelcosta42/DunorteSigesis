@@ -8172,6 +8172,8 @@ if (!$usuario->is_Todos())
 													<th width="30%"><?php echo lang('PRODUTO') ?></th>
 													<th width="10%"><?php echo lang('ESTOQUE') ?></th>
 													<th width="10%"><?php echo lang('QUANTIDADE') ?></th>
+													<th width="10%"><?php echo lang('COMPRIMENTO') ?></th>
+													<th width="10%"><?php echo lang('LARGURA') ?></th>
 													<th width="10%"><?php echo lang('VALOR') ?></th>
 													<th width="10%"><?php echo lang('DESCONTO') ?></th>
 													<th width="10%"><?php echo lang('ACRESCIMO') ?></th>
@@ -8207,7 +8209,7 @@ if (!$usuario->is_Todos())
 																});
 															</script>
 														<?php }
-														$total_valor += $rowv->valor_total - $rowv->valor_desconto + $rowv->valor_despesa_acessoria;
+														$total_valor += $rowv->valor_total * $rowv->comprimento * $rowv->largura - $rowv->valor_desconto + $rowv->valor_despesa_acessoria;
 														$total_quantidade += $rowv->quantidade;
 														$total_desconto += $rowv->valor_desconto;
 														$total_acrescimo += $rowv->valor_despesa_acessoria;
@@ -8217,10 +8219,12 @@ if (!$usuario->is_Todos())
 															<td><?php echo $rowv->nome ?></td>
 															<td><?php echo decimalp($rowv->estoque) ?></td>
 															<td><?php echo decimalp($rowv->quantidade) ?></td>
+															<td><?php echo decimalp($rowv->comprimento) ?></td>
+															<td><?php echo decimalp($rowv->largura) ?></td>
 															<td><?php echo moeda($rowv->valor) ?></td>
 															<td><?php echo moeda($rowv->valor_desconto) ?></td>
 															<td><?php echo moeda($rowv->valor_despesa_acessoria) ?></td>
-															<td><?php echo moeda($rowv->valor_total - $rowv->valor_desconto + $rowv->valor_despesa_acessoria) ?>
+															<td><?php echo moeda($rowv->valor_total * $rowv->comprimento * $rowv->largura - $rowv->valor_desconto + $rowv->valor_despesa_acessoria) ?>
 															</td>
 															<td>
 																<a href="javascript:void(0)" class="btn btn-sm btn-danger apagar"
@@ -8245,6 +8249,8 @@ if (!$usuario->is_Todos())
 												<tr>
 													<th colspan="3"><?php echo lang("TOTAL"); ?></th>
 													<th><?php echo decimalp($total_quantidade) ?></th>
+													<th></th>
+													<th></th>
 													<th></th>
 													<th><?php echo moeda($total_desconto) ?></th>
 													<th><?php echo moeda($total_acrescimo) ?></th>

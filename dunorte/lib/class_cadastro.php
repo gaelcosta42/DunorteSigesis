@@ -8270,6 +8270,8 @@ class Cadastro
 		$sql = "SELECT	cv.id,
 						cv.id_venda,
 						cv.id_produto,
+						cv.comprimento,
+						cv.largura,
 			 			p.id_fabricante,
 		 				p.nome,
 						p.unidade,

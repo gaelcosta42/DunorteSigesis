@@ -9755,7 +9755,7 @@ var Layout = function () {
 		var resultado = soma_valor_total + taxa + a - d - totalPagoPDV;
 		resultado = Math.round(resultado * 100) / 100;
 		resultado = resultado.toFixed(2);
-		
+
 		return 'R$ ' + resultado.toString().replace('.', ',');
 	}
 
@@ -9777,7 +9777,6 @@ var Layout = function () {
 			return false;
 		}
 
-		// 🔑 Atalhos internos do modal
 		shortcut.add("ALT+S", () => $('#valor_desconto_porcentagem_modal').focus());
 		shortcut.add("ALT+D", () => $('#valor_desconto_modal').focus());
 		shortcut.add("ALT+A", () => $('#valor_acrescimo_modal').focus());
@@ -9786,19 +9785,16 @@ var Layout = function () {
 		shortcut.add("ALT+T", () => $('#data_boleto_modal').focus());
 		shortcut.add("ALT+F", () => $('#tipopagamento').focus());
 
-		// 🔑 Abrir modal se solicitado
 		if (abrirModal) {
 			$('#modal_pagamentos').modal();
 		}
 
-		// 🔑 Foco inicial
 		if (focoInicial) {
 			$(focoInicial).focus().select();
 		}
 
-		// 🔑 Eventos de ativação
 		$('#tipopagamento')
-			.off('keyup.clickPagamento') // evita múltiplos binds
+			.off('keyup.clickPagamento') 
 			.on('keyup.clickPagamento', e => {
 				if (e.keyCode === 13) ativaInformacoesPagamento();
 			})
