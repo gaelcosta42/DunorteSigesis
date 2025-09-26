@@ -8862,7 +8862,6 @@ var Layout = function () {
 
 			let calc_porcent = ((valor_desconto * 100) / valor_total);
 			calc_porcent = calc_porcent.toFixed(2);
-			console.log(calc_porcent + ' ' + valor_desconto);
 			$("#valor_desconto_porcentagem").val(calc_porcent);
 			$('#valor_desconto_porcentagem_modal').val(calc_porcent);
 		}
@@ -8996,7 +8995,6 @@ var Layout = function () {
 			valor_total = valor_total.replace('R$ ', '');
 			let calc_porcent = ((valor_desconto * 100) / valor_total);
 			calc_porcent = calc_porcent.toFixed(2);
-			console.log(calc_porcent);
 			//calc_porcent = '% ' + calc_porcent.toString();
 			$("#valor_desconto_porcentagem").val(calc_porcent);
 			$('#valor_desconto_porcentagem_modal').val(calc_porcent);
@@ -9110,194 +9108,14 @@ var Layout = function () {
 
 	$('#data_boleto_modal').hide();
 
-	//Atalho F4 - Selecionar forma de pagamento Vendas > Nova Venda - PDV
-	shortcut.add("F4", function () {
 
-		var id_produto = $('.id_produto').val();
-		var valor_pagar_pdv = $('#valor_pagar').text();
-		valor_pagar_pdv = valor_pagar_pdv.replace('R$ ', '').replace('.', '').replace(',', '.');
-		valor_pagar_pdv = parseFloat(valor_pagar_pdv);
-		if (!id_produto) {
-			alert('Favor selecionar um produto para o pagamento.');
-			return false;
-		} else if (valor_pagar_pdv <= 0) {
-			alert('Não existe pagamento disponível para esta venda.');
-			return false;
-		} else {
-
-			$('#modal_pagamentos').modal();
-			// $('.valores_pagamento').removeClass("mostrar"); mudamos pois estava tirando a seleção do tipo de pagamento
-			// $('.valores_pagamento').addClass("ocultar");
-			$('#tipopagamento').focus();
-
-			shortcut.add("ALT+S", function () { $('#valor_desconto_porcentagem_modal').focus(); });
-			shortcut.add("ALT+D", function () { $('#valor_desconto_modal').focus(); });
-			shortcut.add("ALT+A", function () { $('#valor_acrescimo_modal').focus(); });
-			shortcut.add("ALT+V", function () { $('#valor_pago_modal').focus(); });
-			shortcut.add("ALT+P", function () { $('#parcelas_modal').focus(); });
-			shortcut.add("ALT+T", function () { $('#data_boleto_modal').focus(); });
-			shortcut.add("ALT+F", function () { $('#tipopagamento').focus(); });
-
-			$('#tipopagamento').keyup(function (event) {
-				if (event.keyCode == 13) {
-					ativaInformacoesPagamento();
-				}
-			}).click(function () {
-				ativaInformacoesPagamento();
-			});
-		}
-	});
-
-	//Obtem valor a pagar do pdv
-	function obterValorAPagarPDV() {
-		var totalPagoPDV = 0;
-		$('.valor_pago').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseFloat(i);
-			if (!isNaN(p)) {
-				totalPagoPDV += p;
-			}
-		});
-		var avistaPDV = $('#tipopagamento option:selected').attr('avista');
-		var pagamentosAVistaPDV = 1;
-		var usarValorAVista = 0;
-		$('.pagamento_avista').each(function (indice, item) {
-			var i = $(item).val();
-			var p = parseInt(i);
-			if (!isNaN(p)) {
-				pagamentosAVistaPDV *= p;
-			} else {
-				pagamentosAVistaPDV = 0;
-			}
-		});
-		usarValorAVista = (pagamentosAVistaPDV == 1 && avistaPDV == 1) ? true : false;
-		var aux = 0;
-		var quantidade_pdv = []; //array de quantidades de produtos no formato 1.000
-		$(".quant_venda").each(function () {
-			//quantidade_pdv.push($(".quant_venda")[aux].value);
-			var qtde = $(".quant_venda")[aux].value;
-			quantidade_pdv.push(qtde.replace(',', ''));
-			aux++;
-		});
-
-		aux = 0;
-		var comprimento_pdv = [];
-		$(".comprimento_produto").each(function () {
-			var comp = $(".comprimento_produto")[aux].value || "1";
-			comprimento_pdv.push(comp.replace(',', '.'));
-			aux++;
-		});
-
-		aux = 0;
-		var largura_pdv = [];
-		$(".largura_produto").each(function () {
-			var larg = $(".largura_produto")[aux].value || "1";
-			largura_pdv.push(larg.replace(',', '.'));
-			aux++;
-		});
-
-		aux = 0;
-		var valor_produto = []; //array de valores de produtos no formato R$ 10,00
-		var valor_produto_avista = []; //array de valores avista de produtos no formato 10.00
-		var valor_produto_normal = []; //array de valores normal de produtos no formato 10.00
-		$(".valor").each(function () {
-			valor_produto.push($(".valor")[aux].value);
-			valor_produto_avista.push($(".valor")[aux].getAttribute("valor_avista"));
-			valor_produto_normal.push($(".valor")[aux].getAttribute("valor_normal"));
-			aux++;
-		});
-		var soma_valor_total = 0;
-		let total = 0;
-
-		if (usarValorAVista) {
-			for (i = 0; i < quantidade_pdv.length; i++) {
-				var valor_lista_atual = valor_produto[i];
-				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
-				valor_lista_atual = parseFloat(valor_lista_atual);
-
-				var fator = parseFloat(quantidade_pdv[i]) *
-							parseFloat(comprimento_pdv[i] || 1) *
-							parseFloat(largura_pdv[i] || 1);
-
-				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
-					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
-				} else if (valor_produto_avista[i] > 0) {
-					soma_valor_total += (parseFloat(valor_produto_avista[i]).toFixed(2) * fator);
-				} else {
-					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
-				}
-				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
-			}
-		} else {
-			for (i = 0; i < quantidade_pdv.length; i++) {
-				var valor_lista_atual = valor_produto[i];
-				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
-				valor_lista_atual = parseFloat(valor_lista_atual);
-
-				var fator = parseFloat(quantidade_pdv[i]) *
-							parseFloat(comprimento_pdv[i] || 1) *
-							parseFloat(largura_pdv[i] || 1);
-
-				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
-					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
-				} else {
-					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
-				}
-				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
-			}
-		}
-
-		var taxa = $("#taxa_fixa_entrega").val();
-		taxa = parseFloat(taxa) || 0;
-
-		var acrescimo = $('#valor_acrescimo_modal').val();
-		var a = acrescimo.replace('.', '');
-		a = a.replace(',', '.');
-		a = a.replace('R$ ', '');
-		a = parseFloat(a);
-		if (isNaN(a)) {
-			a = 0;
-		}
-
-		var resultado = soma_valor_total + taxa + a;
-
-		resultado -= totalPagoPDV;
-		resultado = Math.round(resultado * 100) / 100;
-		resultado = resultado.toFixed(2);
-		return 'R$ ' + resultado.toString().replace('.', ',');
-	}
 
 	$(document).on("click", ".edit-orcamento", function () {
 		$("#id_prod_orcamento").val($(this).data("id"));
 		$("#quantidade").val($(this).data("quantidade"));
 	});
 
-	// Ao clicar para escolher um tipo de pagamento
-	function ativaInformacoesPagamento() {
-		var id_categoria_pagamento = $('#tipopagamento option:selected').attr('id_categoria');
-		var id_cadastro = $('#id_cadastro').val();
-		if (id_categoria_pagamento == 9 && !id_cadastro) {
-			alert("Erro! Cliente não informado para venda no crediário.");
-			$('#modal_pagamentos').modal('hide');
-		} else {
-			// $('.valores_pagamento').removeClass("ocultar"); mudamos pois estava tirando a seleção do tipo de pagamento
-			// $('.valores_pagamento').addClass("mostrar");
 
-			if (id_categoria_pagamento == 4 || id_categoria_pagamento == 9) {
-				$('#data_boleto_modal').show();
-				$('#span_data_boleto_modal').show();
-			}
-			else {
-				$('#data_boleto_modal').hide();
-				$('#span_data_boleto_modal').hide();
-			}
-
-			var valorPagarPDV = obterValorAPagarPDV();
-			$('#valor_pago_modal').val(valorPagarPDV);
-			$('#valor_pagar_modal_pgto').val(valorPagarPDV);
-			$('#valor_pago_modal').focus().select();
-		}
-	}
 
 	if ($('.adicionar_pagamento_pdv').length > 0) {
 		$('.adicionar_pagamento_pdv').click(function () {
@@ -9367,12 +9185,11 @@ var Layout = function () {
 		$('#total_produto_aberto').val(novo_valor_total);
 	}
 
-	$('#valor_produto_aberto').keyup(function (event) {
+	$('#valor_produto_aberto, #quantidade_produto_aberto, #acrescimo_produto_aberto').on('keyup', function () {
 		alterarValorProdutoVendaAberto();
 	});
-	$('#quantidade_produto_aberto').keyup(function (event) {
-		alterarValorProdutoVendaAberto();
-	});
+
+
 	$('#desconto_produto_aberto').keyup(function (event) {
 		let valor_produto_aberto = $('#valor_produto_aberto').val();
 		let quantidade_produto_aberto = $('#quantidade_produto_aberto').val();
@@ -9395,9 +9212,7 @@ var Layout = function () {
 		alterarValorProdutoVendaAberto();
 
 	});
-	$('#acrescimo_produto_aberto').keyup(function (event) {
-		alterarValorProdutoVendaAberto();
-	});
+
 
 	$('#valor_pago_modal').keyup(function (event) {
 		if (event.keyCode == 13) {
@@ -9413,11 +9228,9 @@ var Layout = function () {
 
 	
 	///////////////////////////
-	//#region MÓDULO: PDV F4//
-	/////////////////////////
+	//#region MÓDULO: PDV F4
 	const formatReal = val => 'R$ ' + parseFloat(val || 0).toFixed(2).replace('.', ',');
-	const parseReal = val => parseFloat((val || '0').toString().replace(/[R$\s.]/g, '').replace(',', '.')) 
-	|| 0;
+	const parseReal = val => parseFloat((val || '0').toString().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 
 	function atualizarValoresPDV(atualizarAVista) {
 		const produtos = [];
@@ -9793,49 +9606,221 @@ var Layout = function () {
 		return todosAVista;
 	}
 
-	$('.modal_adicionar_pagamento').click(function (event) {
+	// Ao clicar para escolher um tipo de pagamento
+	function ativaInformacoesPagamento() {
+		var id_categoria_pagamento = $('#tipopagamento option:selected').attr('id_categoria');
+		var id_cadastro = $('#id_cadastro').val();
+		if (id_categoria_pagamento == 9 && !id_cadastro) {
+			alert("Erro! Cliente não informado para venda no crediário.");
+			$('#modal_pagamentos').modal('hide');
+		} else {
+			// $('.valores_pagamento').removeClass("ocultar"); mudamos pois estava tirando a seleção do tipo de pagamento
+			// $('.valores_pagamento').addClass("mostrar");
 
-		var id_produto = $('.id_produto').val();
-		var valor_pagar_pdv = $('#valor_pagar').text();
-		valor_pagar_pdv = valor_pagar_pdv.replace('R$ ', '').replace('.', '').replace(',', '.');
+			if (id_categoria_pagamento == 4 || id_categoria_pagamento == 9) {
+				$('#data_boleto_modal').show();
+				$('#span_data_boleto_modal').show();
+			}
+			else {
+				$('#data_boleto_modal').hide();
+				$('#span_data_boleto_modal').hide();
+			}
+
+			var valorPagarPDV = obterValorAPagarPDV();
+			$('#valor_pago_modal').val(valorPagarPDV);
+			$('#valor_pagar_modal_pgto').val(valorPagarPDV);
+			$('#valor_pago_modal').focus().select();
+		}
+	}
+
+	function obterValorAPagarPDV() {
+		var totalPagoPDV = 0;
+		$('.valor_pago').each(function (indice, item) {
+			var i = $(item).val();
+			var p = parseFloat(i);
+			if (!isNaN(p)) {
+				totalPagoPDV += p;
+			}
+		});
+		var avistaPDV = $('#tipopagamento option:selected').attr('avista');
+		var pagamentosAVistaPDV = 1;
+		var usarValorAVista = 0;
+		$('.pagamento_avista').each(function (indice, item) {
+			var i = $(item).val();
+			var p = parseInt(i);
+			if (!isNaN(p)) {
+				pagamentosAVistaPDV *= p;
+			} else {
+				pagamentosAVistaPDV = 0;
+			}
+		});
+		usarValorAVista = (pagamentosAVistaPDV == 1 && avistaPDV == 1) ? true : false;
+		var aux = 0;
+		var quantidade_pdv = []; //array de quantidades de produtos no formato 1.000
+		$(".quant_venda").each(function () {
+			//quantidade_pdv.push($(".quant_venda")[aux].value);
+			var qtde = $(".quant_venda")[aux].value;
+			quantidade_pdv.push(qtde.replace(',', ''));
+			aux++;
+		});
+
+		aux = 0;
+		var comprimento_pdv = [];
+		$(".comprimento_produto").each(function () {
+			var comp = $(".comprimento_produto")[aux].value || "1";
+			comprimento_pdv.push(comp.replace(',', '.'));
+			aux++;
+		});
+
+		aux = 0;
+		var largura_pdv = [];
+		$(".largura_produto").each(function () {
+			var larg = $(".largura_produto")[aux].value || "1";
+			largura_pdv.push(larg.replace(',', '.'));
+			aux++;
+		});
+
+		aux = 0;
+		var valor_produto = []; //array de valores de produtos no formato R$ 10,00
+		var valor_produto_avista = []; //array de valores avista de produtos no formato 10.00
+		var valor_produto_normal = []; //array de valores normal de produtos no formato 10.00
+		$(".valor").each(function () {
+			valor_produto.push($(".valor")[aux].value);
+			valor_produto_avista.push($(".valor")[aux].getAttribute("valor_avista"));
+			valor_produto_normal.push($(".valor")[aux].getAttribute("valor_normal"));
+			aux++;
+		});
+		var soma_valor_total = 0;
+		let total = 0;
+
+		if (usarValorAVista) {
+			for (i = 0; i < quantidade_pdv.length; i++) {
+				var valor_lista_atual = valor_produto[i];
+				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
+				valor_lista_atual = parseFloat(valor_lista_atual);
+
+				var fator = parseFloat(quantidade_pdv[i]) *
+							parseFloat(comprimento_pdv[i] || 1) *
+							parseFloat(largura_pdv[i] || 1);
+
+				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
+					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
+				} else if (valor_produto_avista[i] > 0) {
+					soma_valor_total += (parseFloat(valor_produto_avista[i]).toFixed(2) * fator);
+				} else {
+					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
+				}
+				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+			}
+		} else {
+			for (i = 0; i < quantidade_pdv.length; i++) {
+				var valor_lista_atual = valor_produto[i];
+				valor_lista_atual = valor_lista_atual.replace('R$ ', '').replace('.', '').replace(',', '.');
+				valor_lista_atual = parseFloat(valor_lista_atual);
+
+				var fator = parseFloat(quantidade_pdv[i]) *
+							parseFloat(comprimento_pdv[i] || 1) *
+							parseFloat(largura_pdv[i] || 1);
+
+				if ((valor_lista_atual != valor_produto_avista[i]) && (valor_lista_atual != valor_produto_normal[i])) {
+					soma_valor_total += (parseFloat(valor_lista_atual).toFixed(2) * fator);
+				} else {
+					soma_valor_total += (parseFloat(valor_produto_normal[i]).toFixed(2) * fator);
+				}
+				soma_valor_total = Math.round(soma_valor_total * 100) / 100;
+			}
+		}
+
+		var taxa = $("#taxa_fixa_entrega").val();
+		taxa = parseFloat(taxa) || 0;
+
+		var acrescimo = $('#valor_acrescimo_modal').val();
+		var a = acrescimo.replace('.', '');
+		a = a.replace(',', '.');
+		a = a.replace('R$ ', '');
+		a = parseFloat(a);
+		if (isNaN(a)) {
+			a = 0;
+		}
+
+		var desconto = $('#valor_desconto_modal').val();
+		var d = desconto.replace('.', '');
+		d = d.replace(',', '.');
+		d = d.replace('R$ ', '');
+		d = parseFloat(d);
+		if (isNaN(d)) {
+			d = 0;
+		}
+
+		var resultado = soma_valor_total + taxa + a - d - totalPagoPDV;
+		resultado = Math.round(resultado * 100) / 100;
+		resultado = resultado.toFixed(2);
+		
+		return 'R$ ' + resultado.toString().replace('.', ',');
+	}
+
+	function abrirModalPagamento({abrirModal = false, focoInicial = null} = {}) {
+		let id_produto = $('.id_produto').val();
+		let valor_pagar_pdv = $('#valor_pagar').text()
+			.replace('R$ ', '')
+			.replace('.', '')
+			.replace(',', '.');
+
 		valor_pagar_pdv = parseFloat(valor_pagar_pdv);
 
 		if (!id_produto) {
 			alert('Favor selecionar um produto para o pagamento.');
 			return false;
-		} else if (valor_pagar_pdv <= 0) {
+		}
+		if (valor_pagar_pdv <= 0) {
 			alert('Não existe pagamento disponível para esta venda.');
 			return false;
-		} else {
-
-			shortcut.add("ALT+S", function () { $('#valor_desconto_porcentagem_modal').focus(); });
-			shortcut.add("ALT+D", function () { $('#valor_desconto_modal').focus(); });
-			shortcut.add("ALT+A", function () { $('#valor_acrescimo_modal').focus(); });
-			shortcut.add("ALT+V", function () { $('#valor_pago_modal').focus(); });
-			shortcut.add("ALT+P", function () { $('#parcelas_modal').focus(); });
-			shortcut.add("ALT+T", function () { $('#data_boleto_modal').focus(); });
-			shortcut.add("ALT+F", function () { $('#tipopagamento').focus(); });
-
-			// $('.valores_pagamento').removeClass("mostrar");
-			// $('.valores_pagamento').addClass("ocultar");
-			$('#valor_pago_modal').focus().select();
-
-			$('#tipopagamento').keyup(function (event) {
-				if (event.keyCode == 13) {
-					ativaInformacoesPagamento();
-				}
-			}).click(function () {
-				ativaInformacoesPagamento();
-			});
-
 		}
-	});
 
-	//#endregion 
+		// 🔑 Atalhos internos do modal
+		shortcut.add("ALT+S", () => $('#valor_desconto_porcentagem_modal').focus());
+		shortcut.add("ALT+D", () => $('#valor_desconto_modal').focus());
+		shortcut.add("ALT+A", () => $('#valor_acrescimo_modal').focus());
+		shortcut.add("ALT+V", () => $('#valor_pago_modal').focus());
+		shortcut.add("ALT+P", () => $('#parcelas_modal').focus());
+		shortcut.add("ALT+T", () => $('#data_boleto_modal').focus());
+		shortcut.add("ALT+F", () => $('#tipopagamento').focus());
+
+		// 🔑 Abrir modal se solicitado
+		if (abrirModal) {
+			$('#modal_pagamentos').modal();
+		}
+
+		// 🔑 Foco inicial
+		if (focoInicial) {
+			$(focoInicial).focus().select();
+		}
+
+		// 🔑 Eventos de ativação
+		$('#tipopagamento')
+			.off('keyup.clickPagamento') // evita múltiplos binds
+			.on('keyup.clickPagamento', e => {
+				if (e.keyCode === 13) ativaInformacoesPagamento();
+			})
+			.on('click.clickPagamento', () => ativaInformacoesPagamento());
+	}
+
+	shortcut.add("F4", () => abrirModalPagamento({
+		abrirModal: true,
+		focoInicial: '#tipopagamento'
+	}));
+
+	$('.modal_adicionar_pagamento').on('click', () => abrirModalPagamento({
+		abrirModal: false,
+		focoInicial: '#valor_pago_modal'
+	}));
+
+
+	//#endregion
+	//////////////////////////
 
 	/////////////////////////////////////////////
-	//#region editar TABELA DE PRODUTOS no PDV//
-    ///////////////////////////////////////////
+	//#region editar TABELA DE PRODUTOS no PDV
 
 	// Calcular valor total do produto em cada row ao modificar valor, quantidade, comprimento ou largura
 	function recalcularLinha(produto) {
@@ -9948,10 +9933,10 @@ var Layout = function () {
 	});
 
 	//#endregion
+	///////////////////////////////////////////
 
 	///////////////////////////
-	//#region MÓDULO: PDV F1//
-	/////////////////////////
+	//#region MÓDULO: PDV F1
 
 	function modalProdutosComF1(valor = 0) {
 
@@ -10523,14 +10508,6 @@ var Layout = function () {
 		});
 	}
 
-	shortcut.add("F1", function () {
-		modalProdutosComF1(-1);
-	});
-
-	$('.modal_adicionar_produto').click(function () {
-		modalProdutosComF1();
-	});
-
 	function atualizaValoresPDVQuandoRemoveProduto() {
 		var soma = 0;
 		$('.total').each(function (indice, item) {
@@ -10644,6 +10621,14 @@ var Layout = function () {
 		$("#troco").text(resultado);
 	}
 
+	shortcut.add("F1", function () {
+		modalProdutosComF1(-1);
+	});
+
+	$('.modal_adicionar_produto').click(function () {
+		modalProdutosComF1();
+	});
+
 	// Também remove produto na venda rapida
 	$(document).on('click', 'a.remover_produto_venda', function () {
 
@@ -10708,8 +10693,8 @@ var Layout = function () {
 
 	});
 
-
 	//#endregion 
+	/////////////////////////
 
 	//PASSAR MOUSE POR CIMA E MOSTRAR PREÇO DO PRODUTO
 	$(document).on('mouseenter', '.todos_produtos', function (e) {
